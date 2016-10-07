@@ -1,2 +1,2 @@
 # basiliQA
-Run packaged testsuites on libvirt, locally , Cloud, with Jenkins,  Buildbot or openQA
+Run packaged testsuites on libvirt, locally , Cloud, with Jenkins, Cucumber, Buildbot or openQA
