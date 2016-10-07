@@ -1,2 +1,3 @@
 # basiliQA
-Run packaged testsuites on libvirt, cloud, or on a test laboratory.
+Run packaged multi-machine test suites with virtual machines, in cloud,
+or in a test laboratory.
