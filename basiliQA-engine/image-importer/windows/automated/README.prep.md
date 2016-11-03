@@ -1,7 +1,7 @@
 # What is this?
 
 This directory contains a bunch of code to automate the preparation of a
-Window install so that it can be used by Slenkins.
+Window install so that it can be used by basiliQA.
 
 It creates the users and sets up a SSH server with key
 authentification with the basiliQA pub keys already added.
