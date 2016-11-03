@@ -34,7 +34,7 @@ That .iso file contains the following bits:
 * `pvpanic/`: QEMU pvpanic device driver
 * `guest-agent/`: QEMU Guest Agent 32bit and 64bit MSI installers
 * `qemupciserial/`: QEMU PCI serial device driver
-* `*.vfd`: VFD floppy images for using during install of Windows XP 
+* `*.vfd`: VFD floppy images for using during install of Windows XP
 
 You will have to load the one in `viostor/` during the install. The
 rest can be done later. You probably want to install `NetKVM/` first. To
@@ -184,7 +184,7 @@ reinject the modified configuration:
 
 ```
     WIN> net user root opensuse /add
-    WIN> net user testuser opensuse /add    
+    WIN> net user testuser opensuse /add
     WIN> net localgroup administrators root /add
 ```
 
@@ -206,7 +206,7 @@ reinject the modified configuration:
     WIN> exit
 ```
   __Don't use quotes in the echo command.__ Use `cls` to clear messed up screen.
-* Test key login 
+* Test key login
 ```
     unix$ ssh -i /usr/lib/basiliqa/init-jail/ssh_id_rsa <user>@<ip>
 ```
