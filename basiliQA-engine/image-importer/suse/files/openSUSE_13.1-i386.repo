@@ -1,0 +1,8 @@
+[openSUSE-13.1]
+name=openSUSE-13.1
+enabled=1
+autorefresh=0
+baseurl=http://dist.suse.de/install/SLP/openSUSE-13.1-GM/i386/DVD1/
+path=/
+type=yast2
+keeppackages=0

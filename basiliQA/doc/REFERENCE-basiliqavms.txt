@@ -1,0 +1,306 @@
+                           basiliqa-vms.sh REFERENCE
+                           =========================
+
+
+About this reference manual
+---------------------------
+
+This is the reference of the "basiliqa-vms.sh" shell wrapper
+used during local tests.
+
+It provides a general overview of the syntax used by this
+utility, then details how to get online help, how to get a list
+of images, and how to run local tests.
+
+For an introduction to local tests, see HOWTO-localtests.txt
+
+There is also a query utility, "basiliqa-query.sh". See
+REFERENCE-basiliqaquery.txt for more information.
+
+
+Overview
+--------
+
+If you just use basiliqa-vms.sh with -h or --help parameter,
+it will display online help.
+
+Otherwise, basiliqa-vms.sh runs the tests. There are few mandatory
+parameters. You need to provide at least:
+ - one image for each test node, with -i or --image;
+ - the name of your project, as last argument.
+
+An example command could be:
+
+  $ basiliqa-vms.sh --local \
+                    --image client=SLE_12-x86_64-default \
+                    --image server=SLE_12-x86_64-fips \
+                    tests-apache2
+
+You can use options to override the settings from the nodes file.
+Such options are always in upper case.
+
+
+The options
+-----------
+
+  -A <node>=<yes-or-no>
+  --refresh <node>=<yes-or-no>
+
+Requests to do a refresh and upgrade before starting
+the tests. Please also declare update channels when you use
+this option with "yes". Beware that tests done with this
+option set to "yes" might not be reproduceable, as the available
+updates might change over time. A faster alternative that
+brings reproduceable results is to use images with built-in
+updates.
+
+
+  -b <local-build-directory>
+  --build-root <local-build-directory>
+
+Requests to use the packages built locally wth OBS in
+the specified directory for the tests.
+
+
+  -c <control-package>
+  --control-pkg <control-package>
+
+Specifies the name of the test control package.
+If not provided, defaults to "tests-control".
+
+
+  -d <images-directory>
+  --image-dir <images-directory>
+
+Specifies the location of the local qcow2 images cache.
+If not provided, defaults to /var/tmp/basiliqa/images, but
+this can be redefined in /etc/basiliqa/basiliqa.conf.
+
+
+  -D <network>=<yes-or-no>
+  --dhcp <network>=<yes-or-no>
+
+Overrides the "dhcp" directive for a given network that is
+defined in the nodes file. Provides or not a DHCP server
+for that network.
+
+
+  -f <cidr>
+  --subnet-fixed <cidr>
+
+Specifies the IPv4 address range to use for the fixed
+network used by the virtual machines. It must be given
+in CIDR notation, for example "10.1.0.0/16". If not
+provided, defaults to the value given in
+/etc/basiliqa/basiliqa.conf, normally
+"192.168.15.0/24".
+
+
+  -g <cidr6>
+  --subnet6-fixed <cidr>
+
+Specifies the IPv6 address range to use for the fixed
+network used by the virtual machines. It must be given
+in CIDR notation, for example "fd00:1:2:3::/64". If not
+provided, defaults to the value given in
+/etc/basiliqa/basiliqa.conf, normally
+"fc00:0:0:f::/64".
+
+
+  -G <network>=<yes-or-no>
+  --gateway <network>=<yes-or-no>
+
+Overrides the "gateway" directive for a given network that is
+defined in the nodes file. Provides or not an IPv4 exit gateway
+for that network.
+
+
+  -i <node>=<image-name>
+  --image <node>=<image-name>
+
+For each test node, specifies which qcow2 image to use.
+This parameter is mandatory.
+
+
+  -I <node>=<packages>
+  --install <node>=<packages>
+
+Overrides the "install" directives for a given node that is
+defined in the nodes file. Requests to install one or more
+packages (names separated by spaces) on that node.
+
+
+  -j
+  --jail
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail in ~/jail.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -K
+  --keep
+
+Overrides the global "keep" directive that is defined
+in the nodes file. Requests to keep the virtual machines
+and the virtual networks if the test was successful.
+
+
+  -l
+  --local
+
+Requests to use the packages built locally with OBS in
+/var/tmp/build-root for the tests.
+
+
+  -m <flavor>
+  --vm-model <flavor>
+
+Specifies the memory, disk and CPU model to use by default.
+The names emulate the names of flavors in OpenStack.
+If not provided, defaults to the value defined in
+/etc/basiliqa/basiliqa.conf, normally "m1.smaller",
+which stands for 1 virtual CPU, 1 Gb of memory and
+18 Gb of disk space.
+
+
+  -M <node>=<flavor>
+  --model <node>=<flavor>
+
+Overrides the "model" directive for a given node that is
+defined in the nodes file. Requests to use the
+memory, disk and CPU flavor defined in OpenStack
+on that node.
+
+
+  -N <node>=<networks>
+  --nic <node>=<networks>
+
+Overrides the "ethernet" directives for a given node that is
+defined in the nodes file. Requests to connect one or
+more network interfaces to the respective networks
+(names separated by spaces) on that node.
+
+
+  -p <username>
+  --home-project <username>
+
+Enables to use packages built in your home project in IBS.
+You will need to aggregate basiliQA packages to your home
+project. Precedence order, from highest precedence to lowest
+precedence, is (a) locally built packages, (b) packages built
+in IBS home project, and (c) packages built in
+Devel:basiliQA:testsuites.
+
+
+  -r <jail-root-directory>
+  --jail-root <rpm-root-directory>
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail given by
+its path.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -R <node>=<urls>
+  --repo <node>=<urls>
+
+Overrides the "repo" directives for a given node that is
+defined in the nodes file. Requests to install one or
+more repositories defined by their URLs
+(separated by spaces) on that node.
+
+
+  -s <image-url>
+  --image-source <image-url>
+
+Specifies the place where the qcow2 images reside.
+If not provided, defaults to value specified in
+/etc/basiliqa/basiliqa.conf, normally "/var/tmp/basiliqa/images".
+
+
+  -S <network>=<cidr>
+  --subnet <network>=<cidr>
+
+Overrides the "subnet" directive for a given network that is
+defined in the nodes file. Defines the IPv4 subnet used on
+that network.
+
+
+  -6 <network>=<cidr6>
+  --subnet6 <network>=<cidr6>
+
+Overrides the "subnet6" directive for a given network that is
+defined in the nodes file. Defines the IPv6 subnet used on
+that network.
+
+
+  -u <virsh-uri>
+  --virsh-uri <virsh-uri>
+
+Specifies the way to communicate with virsh virtualization
+utility. If not provided, uses the value defined in
+/etc/basiliqa/basiliqa.conf, normally "qemu:///system".
+
+
+  -U <node>=<packages>
+  --uninstall <node>=<packages>
+
+Overrides the "uninstall" directives for a given node that is
+defined in the nodes file. Requests to uninstall one or more
+packages (names separated by spaces) on that node.
+
+
+  -v
+
+Uses "virtio:" targets instead of "ssh:" targets. This is
+useful for test suites that might discrupt network operation.
+
+
+  -V <node>=<sizes>
+  --disk <node>=<sizes>
+
+Overrides the "disk" directives for a given node that is
+defined in the nodes file. Requests to provide one or
+more hard disks of the respective sizes (numbers
+followed by "G" for "gigabyte" and separated by spaces)
+on that node.
+
+
+  -w <workspace-directory>
+  --workspace <workspace-directory>
+
+Specifies the directory to use during the test to store
+temporary files, results, etc. If not provided, defaults
+to a directory named like the test project inside of the
+"workspace root". The workspace root is normally
+/var/tmp/basiliqa/workspace, but this can be redefined in
+/etc/basiliqa/basiliqa.conf.
+
+
+  -x <execution-context>
+  --context <execution-context>
+
+This option enables to run the same test suite several
+times in parallel, for example once in context "patched"
+and once in context "unpatched". The context string is
+any arbitrary string used to differentiate two parallel
+runs. Default is no context.
+
+
+  -X <node>=<urls>
+  --extra-repo <node>=<urls>
+
+This value does not fully override the "repo" directives.
+It is rather prepended to the list of repositories.
+Requests to install one or more directories defined by
+their URLS (separated by spaces) on that node, in addition
+to the other ones.
+
+
+  <project-name>
+
+The last argument is the name of the source test package.
+

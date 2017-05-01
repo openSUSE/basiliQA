@@ -1,0 +1,211 @@
+                           Python test suites HOWTO
+                           ========================
+
+
+About this HOWTO
+----------------
+
+This short guide describes how to use the SuseTest Python API to write
+basiliQA test suites, and what is the basic layout of the RPM package
+that contains the test suite.
+
+For a first introduction to basiliQA, please refer
+to HOWTO-firststeps.txt.
+
+
+Creating the test suite
+-----------------------
+
+The simplest way to create a Python basiliQA testsuite is
+to use create-testsuite.sh:
+
+  $ /usr/lib/basiliqa/create-testsuite/create-testsuite.sh
+
+This command submits a list of choices for the creation of
+the new testsuite. Make sure the following is set:
+
+  LANGUAGE="python"
+
+and choose reasonable values for the rest.
+
+Once the command has finished, you have three new files in your
+current directory: a RPM spec file, a changes log, and a sources tree.
+
+Those three items can be imported into a new project in the
+Open Build Service, in order to build your test suite package,
+either in Devel:basiliQA:testsuites, or in your IBS home project
+(local tests only). See Open Build Service documentation for details.
+
+After that, you can run your test suite, either from Jenkins
+web interface, or locally on your workstation. See
+HOWTO-jenkinsui.txt or HOWTO-localtests.txt for details.
+
+
+Test suite Initialization
+-------------------------
+
+We will now start examining the Python source code
+that has been generated automatically. Open
+
+  tests-<suite>-<version>/testsuite-control/run.py
+
+where <suite> is the name of your suite and <version> is its
+version number, for example:
+
+  tests-helloworld-0.0.1/testsuite-control/run.py
+
+The file run.py orchestrates the tests on the control node.
+This program starts with a few imports:
+
+  import sys
+  import traceback
+  import twopence
+  import susetest
+  import suselog
+
+sys is needed for exiting with a given return code. traceback
+enables to display stack traces. twopence enables communication
+(usually, through SSH) with systems under test. susetest is the
+python testing API, and suselog is the python logging API.
+
+Then follow variable initialization, including
+
+  client = None
+  server = None
+
+client and server are "targets", encapsulating the descriptions of
+the systems under test. Their number and names might depend on
+the test suite.
+
+There is then a setup() function meant to initialize
+the various objects:
+
+  config = susetest.Config("tests-helloworld")
+  journal = config.journal
+  client = config.target("client")
+  server = config.target("server")
+
+The Config() method gets the environment that is passed by basiliQA
+to describe current test run. The name passed to the Config() method
+will be used in the JUnit report that is generated.
+
+If you want, you can tune the internal logging of twopence here.
+Currently, the maximum debug level is 2:
+
+  twopence.setDebugLevel(0)
+
+
+Logging
+-------
+
+During your tests, you use
+
+  journal.beginTest("This is some test")
+
+before every test, and you use either
+
+  journal.failure("Test has failed because of contrary winds")
+
+or
+
+  journal.success("Test has miraculously succeeded")
+
+after every test.
+
+You can group your tests with:
+
+  journal.beginGroup("Setup phase")
+
+and
+
+  journal.endGroup()
+
+There is a fatal() method for reporting fatal errors:
+
+  if not client.ipaddr:
+    journal.fatal("No IP address set for client")
+
+
+Running tests
+-------------
+
+The run() method enables to run a command on the system under tests:
+
+  if not node.run("ls /boot"):
+    journal.failure("Test on " + node.name + " has failed")
+
+You may provide a non-default value for the timeout:
+
+  client.run("ping -c1 172.16.1.1", 30)
+
+If a test fails, there are two possible strategies: you can consider
+the error as fatal, and raise an exception:
+
+  raise susetest.BasiliqaError(1)
+
+which you would catch with:
+
+  except BasiliqaError as e:
+    journal.writeReport()
+    sys.exit(e.code)
+
+or you can simply continue with next tests. If you do that, take care
+of providing a correct exit value from run.py:
+
+  journal.writeReport()
+  sys.exit(journal.num_failed())
+
+You may run a command in the background, and wait for completion:
+
+  if not server.wait():
+    ...
+
+You have access to the output of the command:
+
+  status = node.run(cmd)
+  string = str(status.stdout)
+  print string
+
+If you need to run several shell commands at once, you can take profit
+of multiline strings:
+
+  complicated_script = '''
+    ls  /root; if [[ $? -eq 0 ]]; then
+      echo "do stuff"
+    else
+      echo "do other stuff" 
+    fi
+    uptime; cat /etc/hosts | grep findme;     
+    '''
+  client.run(complicated_script)
+
+
+The specfile
+------------
+
+In the specfile, you have to add susetest as a requirement of the
+control subpackage: 
+
+  %package tests-control
+  Group:      QA
+  Summary:    Test suite control scripts
+  BuildArch:  noarch
+  Prereq:     basiliqa susetest
+  Requires:   %{name} = %version-%release
+
+
+Going further
+-------------
+
+A more advanced example on how to use SuseTest has been provided by Olaf Kirch:
+
+  https://build.suse.de/package/show/Devel:basiliQA:testsuites/twopence-example
+
+There is also a more detailed HOWTO that comes with package susetest:
+
+  /usr/share/doc/packages/susetest/HOWTO
+
+Finally, you can take a look at the python library itself:
+
+  https://github.com/okirch/susetest
+

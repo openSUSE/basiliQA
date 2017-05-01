@@ -1,0 +1,16 @@
+{
+  "name": "@@TYPE@@-@@PROGRAM@@",
+  "summary": "Test suite for @@PROGRAM@@",
+  "description": "basiliQA test suite for @@PROGRAM@@.",
+  "status": "development",
+  "maintainer": ["@@PACKAGER@@ <@@EMAIL@@>"],
+  "rpm": [@@PACKAGESLIST@@],
+  "arch": ["noarch"],
+  "product": "@@PROGRAM@@",
+  "fate": null,
+  "bnc": null,
+  "updated_at": "@@DATE2@@",
+  "tags": ["basiliqa"],
+  "nodes": [@@NODESLIST2@@],
+  "incompatible": []
+}

@@ -1,0 +1,222 @@
+                       Static test setups with basiliQA
+                       ================================
+
+
+About this HOWTO
+----------------
+
+To use basiliQA, you create test packages, then you test them from
+the Jenkins web interface or locally. Normally, local tests use
+virtual machines for your systems under test (SUT), but you can
+also use bare metal machines. You can also reuse a previous
+setup with virtual machines to start a new test without redeploying
+the virtual machines.
+
+This short guide explains how to run your tests on such a "static"
+setup. For an introduction to the usual way to test locally with
+virtual machines, see HOWTO-localtests.txt. For the reference of
+the "basiliqa-static.sh" utility, please refer to
+REFERENCE-basiliqastatic.txt.
+
+
+Introduction
+------------
+
+These are examples of static setups:
+
+ - you have a test laboratory with bare metal hosts. The control node
+   is one physical machine, and the systems under tests are other
+   physical machines that are connected to the control node;
+
+ - you reserved physical machines from Orthos to be the systems under
+   tests. The control node can be your workstation;
+
+ - your system under tests will be System z virtual machines
+   that you reserved and installed manually;
+
+ - your setup is a leftover of a call to basiliqa-vms.sh with
+   the -K (keep) option to keep the virtual machines after use.
+
+The test packages on your control node might be confined to a jail
+even with static setups.
+
+
+Reusing a previous setup with VMs
+---------------------------------
+
+First install "basiliqa-engine-static" engine
+and "basiliqa" test suite helpers:
+
+  # zypper ar http://download.opensuse.org/repositories/basiliQA/openSUSE_Leap_42.2/basiliQA.repo
+  # zypper ref
+  # zypper in basiliqa-engine-static basiliqa
+
+(replace distribution name if needed).
+
+Main configuration file is /etc/basiliqa/basiliqa.conf. This
+XML file enables you to change many default settings. For
+example, you could set there the path of the directory for your jail,
+if you are using one.
+
+The example commands below set up a test environment with VMs,
+then reuse it for a second test:
+
+  $ basiliqa-vms.sh -j \
+    -i sut=SLE_12_SP1-x86_64-default tests-helloworld -K
+
+    (test runs...)
+
+  $ basiliqa-static.sh -j \
+    tests-helloworld
+
+    (test runs again)
+
+
+"Dirty" environment
+-------------------
+
+Unlike with the cloud or local VMs, you do not start each time
+from a clean, controlled environment. This might lead to different
+results, as a test suite might leave files behind, change network
+settings, or even break the system.
+
+If you feel the need to write cleanup code, don't make it part
+of the test suite itself, as this code will be useless when you
+run the same test suite in the cloud or with VMs. Write it
+in some special directory and run it manually.
+
+*** TODO: we could have special mechanisms for this ***
+
+
+Bare metal: installing the control node
+---------------------------------------
+
+To use basiliQA on bare metal machines or an equivalent static setup,
+the control package of your test suite must be installed manually:
+
+  # zypper ar http://download.opensuse.org/repositories/basiliQA:/testsuites/openSUSE_Leap_42.2/basiliQA:testsuites.repo
+  # zypper ref
+  # zypper in tests-helloworld-test-control
+
+(replace distribution name if needed). You must install the control
+package inside the jail, if you are using one - otherwise, proceed
+normally. For more information about how to create and use a jail,
+refer to HOWTO-localtests.txt.
+
+If you are not testing with a jail, you must also install SSH key
+in file ~/.ssh/id_rsa of the user that will run the tests.
+You can get this key from file
+/usr/lib/basiliqa/init-jail/ssh_id_rsa (in package basiliqa-engine).
+More information about this can be found in HOWTO-localtests.txt.
+
+
+Bare metal: installing the systems under test
+---------------------------------------------
+
+If you are using bare metal systems under test or equivalent
+setups, you are also responsible for preparing them one
+after the other.
+
+IMPORTANT NOTE: you do not need to do that if you are reusing
+a previous setup with VMs left over from command basiliqa-vms.sh.
+
+Prepare the system under tests by creating two users named
+"root" and "testuser", and allowing to connect to them with help
+of an authorized SSH key:
+
+  $ cd /usr/lib/basiliqa/static/
+  $ ./prepare-sut.sh 10.161.155.202 SLE_12_SP2
+
+(assuming the IP address of your SUT is 10.161.155.202, and the
+system is of family SLE_12_SP2).
+
+IMPORTANT NOTE: do this on test systems only! Do not do it
+on systems used otherwise, as this will allow everyone
+to become root user easily!
+
+Then install the SUT part of test packages:
+
+   # ssh root@10.161.155.202 "zypper in tests-helloworld2-test-sut"
+
+
+Bare metal: setting up the test environment
+-------------------------------------------
+
+With static setups, there is no "nodes file" used to deploy the
+environment (because you deployed it manually). However, there is
+a "test environment" file, usually named "testenv.xml".
+
+The basiliqa-static.sh utility can be given the path to the
+test environment:
+
+   $ basiliqa-static.sh -j \
+     -e /var/tmp/basiliqa/workspace/tests-helloworld/testenv.xml
+
+The complicated path above is standard path for a test suite
+named "tests-helloworld", as used by basiliqa-vms.sh.
+
+Now, for a bare metal setup, you will want to write yourself your
+own test environment file, for example in
+/var/tmp/basiliqa/mystatictestenv.xml:
+
+  <testenv name="tests-helloworld">
+    <node name="SUT"
+          target="ssh:192.168.15.234" />
+  </testenv>
+
+This minimalistic environment file tells that the system under
+test, named "SUT", can be accessed through ssh at IP address
+192.168.15.234. You can then run the test with:
+
+  $ basiliqa-static.sh -j \
+    -e /var/tmp/basiliqa/mystatictestenv.xml
+
+Beware that, if you use a jail, this file must be in the jail,
+or in some shared directory like /var/tmp/basiliqa.
+
+The helper script tries hard to guess missing parameters,
+if its work is not satisfying, you can always provide them
+explicitely.
+
+More details about the syntax of testenv.xml can be found in
+REFERENCE-testenv.
+
+
+A note about SuseTest
+---------------------
+
+SuseTest has the same functionality as the basiliqa-static.sh utility,
+excepted that it works only with Python and will not work with jails.
+
+However, it can prove useful with bare metal setups when you don't
+want to install basiliQA software. Also, it accepts an alternate
+syntax named "curly" for the test environment files, for those
+allergic to XML.
+
+
+Testing with a broken or no network
+-----------------------------------
+
+With static setups, you are not limited to TCP/IP networking to
+send commands to the systems under test.
+
+Alternatives include virtio (with virtual machines)
+and serial cables (connecting bare metal machines).
+
+To do that,
+* install twopence_test_server on the systems under test;
+* use "virtio:" or "serial:" instead of "ssh:" in
+  your twopence targets.
+
+Examples of twopence targets using different methods:
+
+  ssh:192.168.15.2
+  virtio:/var/run/twopence/sut
+  serial:/dev/ttyS0
+
+This way, you can run tests that might break network connections.
+Beware that there is currently no support for virtio in
+the cloud, so this can be done only locally or with static
+setups.
+
+For more details, see twopence_command man page.

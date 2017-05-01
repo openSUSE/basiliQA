@@ -1,0 +1,389 @@
+                           Test environment REFERENCE
+                           ==========================
+
+
+This is the reference of the "testenv" utility that can be
+used to access the environment of the test, of the
+corresponding Python and Ruby interfaces, and finally of the
+format of the "testenv.xml" file.
+
+For an introduction to test packages, see HOWTO-testpackage.txt.
+For the discouraged alternative of environment variables, see
+REFERENCE-variables.txt. For an introduction to the static test
+utility that uses this test environment file, please refer to
+REFERENCE-basiliqastatic.txt.
+
+
+Shell interface - global syntax
+===============================
+
+  $ testenv -h
+  $ testenv --help
+
+Displays a help page.
+
+  $ testenv [-f|--filename <file>] <selector>
+
+Reads test environment from some XML file:
+ - if --filename option is used, from the file given on
+   the command line;
+ - otherwise, if $WORKSPACE variable is defined,
+   from $WORKSPACE/getenv.xml;
+ - otherwise, from getenv.xml in the current directory.
+
+The XML file is created by basiliQA when a test is started.
+The exact structure and contents of this file are outside
+of the scope of this document.
+
+
+Shell interface - selectors
+===========================
+
+  $ testenv name
+
+Gets the name of the test project name, as defined in $PROJECT_NAME
+enviroement variable.
+
+
+  $ testenv context
+
+Gets the context of the test, as defined in $EXECUTION_CONTEXT
+enviroement variable. This is helpful to run in parallel same
+test suite in different contexts.
+
+
+  $ testenv parameters
+
+Gets the parameters of the test suite, separated by commas,
+as defined in $TEST_PARAMETERS environment variable. These
+parameters are passed into the jail, when using one.
+This string is empty when the test suite is not parametrized.
+
+
+  $ testenv workspace
+
+Gets workspace directory, as communicated by Jenkins through
+$WORKSPACE environment variable. You can use that directory to
+store your temporary files, as needed by your tests.
+
+
+  $ testenv report
+
+Gets name of JUnit XML report file. You do not need this value if
+you use the jlogger helper function.
+
+
+  $ testenv networks
+
+Lists the defined networks. You can define networks in the nodes file.
+If you don't, you'll always get a network named "fixed".
+For explanations about the nodes file, see REFERENCE-nodesfile.txt.
+
+
+  $ testenv network:subnet <network>
+
+Gets the IPv4 prefix for the given network.
+
+
+  $ testenv network:subnet6 <network>
+
+Gets the IPv6 prefix for the given network.
+
+
+  $ testenv network:gateway <network>
+
+Gets the IPv4 address of its exit gateway. If the network cannot get outside
+of the cloud, this will be "N/A".
+
+
+  $ testenv nodes
+
+Lists the defined nodes. You can define nodes in the nodes file.
+You must define at least one node.
+
+
+  $ testenv node:target <node>
+
+Gets a twopence target for given node. This will usually be "ssh:" followed
+by an (external) IP address. You can later on use that target for example
+with: twopence_command $target "ls -l".
+
+
+  $ testenv node:internal-ip <node>
+
+Gets an IPv4 address for the node given by its name, that is
+meaningful inside of the cloud. If a node has several network interfaces,
+this is the first valid address of these interfaces (there is at least one).
+
+For the direct communication between test nodes, it is advised
+to use internal IP addresses, even though external ones should also work.
+
+
+  $ testenv node:external-ip <node>
+
+Gets an IPv4 address for the node given by its name,
+that can be reached from the outside of the test cloud.
+
+If the interface is on a network that has an exit gateway, like the default
+"fixed" network, it gets an external IP address in addition to the internal
+IP address. The external IP address gets mapped (natted) to the internal
+IP address by the cloud.
+
+In the OpenStack jargon, the internal IP is a "fixed IP" and the
+external IP is a "floating IP".
+
+
+  $ testenv node:ip6 <node>
+
+Gets an IPv6 address for the node given by its name.
+For IPv6, there is no difference between internal and external addresses.
+
+
+  $ testenv interfaces <node>
+
+Lists all the interfaces for a given node.
+
+
+  $ testenv interface:internal-ip <node> <iface>
+
+Gets the internal IPv4 address for a given interface on a given node.
+
+
+  $ testenv interface:external-ip <node> <iface>
+
+Gets the external IPv4 address for a given interface on a given node.
+
+
+  $ testenv interface:ip6 <iface> <node>
+
+Gets the IPv6 address for a given interface on a given name.
+
+
+  $ testenv interface:network <node> <iface>
+
+Gets the name of the network a given interface on a given node
+is attached to.
+
+
+  $ testenv disks <node>
+
+Lists all the disks for a given node.
+
+
+  $ testenv disk:size <node> <disk>
+
+Gets the size of a given disk (specified by its device name)
+on a given node.
+
+
+Python interface
+================
+
+Here is how you would list the nodes, then query the external IP address
+of interface "eth0" on node "client":
+
+  import testenv
+
+  env = testenv.Testenv()
+
+  nodes = env.nodes()
+  ip = env.interface_external_ip("client", "eth0")
+
+You can pass a filename to the constructor of the Testenv object to specify
+where to fetch the test environment from:
+
+  env = testenv.Testenv("/tmp/myenv.xml")
+
+If you don't, the constructor will use $WORKSPACE/testenv.xml if the
+$WORKSPACE variable is defined, and testenv.xml in the current directory
+otherwise.
+
+The query functions map exactly to the shell selectors described above.
+Just use underscores "_" instead of columns ":" and dashes "-".
+
+The query functions like nodes(), which enumerate values, return Python
+lists of strings. The query functions like node_target(), which get
+unique values, return Python strings.
+
+In case of an error, a Python exception is raised. The exception object is
+testenv.error.
+
+
+Ruby interface
+==============
+
+Here is how you would list the nodes, then query the external IP address
+of interface "eth0" on node "client":
+
+  require "testenv"
+
+  env = Testenv::init()
+
+  nodes = env.nodes()
+  ip = env.interface_external_ip("client", "eth0")
+
+You can pass a filename to the init method of the Testenv module to specify
+where to fetch the test environment from:
+
+  env = Testenv::init("/tmp/myenv.xml")
+
+If you don't, the constructor will use $WORKSPACE/testenv.xml if the
+$WORKSPACE variable is defined, and testenv.xml in the current directory
+otherwise.
+
+The query functions map exactly to the shell selectors described above.
+Just use underscores "_" instead of columns ":" and dashes "-".
+
+The query functions like nodes(), which enumerate values, return Ruby
+arrays of strings. The query functions like node_target(), which get
+unique values, return Ruby strings.
+
+In case of an error, a Ruby exception of type StandardError is raised.
+
+
+File format for testenv.xml
+===========================
+
+<testenv> element
+----------------
+
+Syntax outline
+
+  <?xml version="1.0">
+  <testenv name="..." context="..." parameters="..." workspace="..." report="...">
+    ...
+  </testenv>
+
+Attributes
+
+  name: name of test suite
+  workspace: path to the work space directory
+  context: arbitrary string, allowing for parallel execution
+  paramaters: test suite parameters
+  report: path of the JUnit XML file
+
+Contents model
+
+  <cloud>: tests in cloud only, one occurrence
+  <vms>: tests in VMs only, one occurrence
+  <network>: N occurrences, one per IP network
+  <node>: N occurrences, one per system under tests
+
+
+<cloud> element
+---------------
+
+Syntax outline
+
+  <cloud auth-url="..." project-name="..." username="..." password="..." model="..." />
+
+Attributes
+
+  auth-url: openstack authentication URL
+  project-name: name of openstack project
+  username: name of openstack user
+  password: password of openstack user
+  model: default instance flavour
+
+Contents model
+
+   Empty
+
+
+<vms> element
+-------------
+
+Syntax outline
+
+  <vms virsh-uri=" " model=" " />
+
+Attributes
+
+  virsh-uri: libvirt URI, for example system:///qemu
+  model: flavour, for example m1.smaller
+
+Contents model
+
+  Empty
+
+
+<network> element
+-----------------
+
+Syntax outline
+
+  <network subnet="..." subnet6="..." gateway="..." />
+
+Attributes
+
+  subnet: IPv4 subnet, for example 192.168.31.0/24
+  subnet6: IPv6 subnet, for example fd00:c0ca:c01a::/64
+  gateway: IPv4 gateway address
+
+Contents model
+
+  Empty
+
+
+<node> element
+--------------
+
+Syntax outline
+
+  <node name="..." target="..." internal-ip="..." external-ip="..." ip6="..." network="...">
+    ...
+  </node>
+
+Attributes
+
+  name: name of node, for example "client" or "server"
+  target: the twopence "target" used to contact the node,
+          for example ssh:10.160.2.208
+  internal-ip: the IPv4 address that another SUT can use
+  external-ip: the IPv4 address to contact the SUT from control node;
+               the difference between internal and external
+               addresses comes from the cloud, there is no difference
+               with the other setups
+  ip6: the IPv6 address associated with the node;
+       if a node has several IPv4 or IPv6 addresses, this is just
+       one of them
+  network: the name of a network connected to this node
+
+Contents model
+
+  <interface>: N occurrences, each describes a network interface
+  <disk>: N occurrences, each describes a hard disk
+
+
+<interface> element
+-------------------
+
+Syntax outline
+
+  <interface name="..." target="..." internal-ip="..." external-ip="..." ip6="..." network="..." />
+
+Attributes
+
+  name: name of interface, for example eth0
+  other attributes have the same meaning than for the <node>
+
+Contents model
+
+  Empty
+
+
+<disk> element
+--------------
+
+Syntax outline
+
+  <disk name="..." size="..." />
+
+Attributes
+
+  name: the name of the disk, like /dev/sdb
+  size: the size in gigabytes, for example 18G
+
+Contents model
+
+  Empty

@@ -1,0 +1,276 @@
+SUMMARY OF QUESTIONS
+
+1. Why aren't the update repositories installed by default?
+
+2. Why is a zypper update not done systematically?
+
+3. Should I install other packages from the nodes file, or
+   should I declare these as dependencies of the test package?
+
+4. How can I access a repository in my home project in IBS or OBS?
+
+5. I am using a SUSE or openSUSE image.
+   How do I get the number of the build that was used to generate it?
+
+6. With twopence, how can I use a command that never returns,
+   e. g. "reboot"?
+
+7. I can't create or enter the jail. What is wrong?
+
+8. I am building packages locally on my workstation.
+   basiliQA can't find the control package. What's happening?
+
+9. I am building packages locally on my workstation.
+   How can I test a package whose name has changed?
+
+10. I am building packages locally on my workstation.
+    Packages are not taken from my local build, why?
+
+11. I am testing a package for some other platform in QEmu emulation mode.
+    I get messages "Failed to connect socket" and "Permission denied". Why?
+
+12. I am testing a PowerPC package in QEmu emulation mode.
+    SSH connection to the VM is immediately closed. Why?
+
+13. Which setup is needed with a remote virtualization host?
+
+14. Can I have a variable number of test machines?
+
+
+DETAILED ANSWERS
+
+1. Q: Why aren't the update repositories installed by default?
+
+   A: The policy is to add as few repositories as possible, as it is
+      always easier to add than to remove.
+
+      If you want the updates channel, you can request it from
+      the nodes file, or from some run-time setting.
+
+
+2. Q: why is a zypper update not done systematically?
+
+   A: The problem with refreshing with update repos is that the
+      updated packages change over time. This means that the outcome
+      of your tests might not be reproduceable from one run
+      to the next one.
+
+      Also, a full refresh lasts about ten minutes on each system
+      under tests.
+
+      Finally, a zypper update would let you using old versions
+      of already opened libraries, and old version of kernel.
+      The only way to activate the new versions would be to reboot.
+
+      For all those reasons, a better alternative is to use an image
+      with built-in updates. Such images are generated on a regular
+      basis.
+
+      If you still want an initial refresh, you can ask one from the
+      nodes file, or from some run-time setting.
+
+
+3. Q: Should I install other packages from the nodes file, or
+      should I declare these as dependencies of the test package?
+
+   A: It depends. As a general rule of thumb, whenever you can,
+      use plain old RPM dependencies.
+
+      In other words, whenever possible, prefer:
+          PreReq:      other_package
+      in spec file to:
+          install      other_package
+      in nodes file.
+
+      Reasons are that:
+       - dependency problems will be detected at build time,
+         not at test time;
+       - someone can query the dependencies of the test
+         package with "rpm -q --requires";
+       - you may use RPM conditional macros to act differently
+         upon system version.
+
+      But there are cases where you have to use the nodes file:
+       - if you have your own experimental package in your
+         home directory in the Open Build Service that should
+         override the normal package of same name;
+       - if the package is not part of the core distribution,
+         for example if it is part of the SDK.
+
+
+4. Q: How can I access a repository in my home project in IBS or OBS?
+
+   A: You can always declare explicitely the repository's URL in the
+      nodes file or override it at run time. But this URL will not adapt
+      itself to the chosen image.
+
+      If you are testing locally, you can declare a new channel
+      in /etc/basiliqa/channels.conf.
+
+      You might also install manually the repository from your
+      test scripts, based on the value of the $FAMILY_xxx variable.
+
+      We realize that these three solutions are not very good,
+      and we might eventually come up with a better way to deal with
+      non-default home repositories.
+
+
+5. Q: I am using a SUSE or openSUSE image.
+      How do I get the number of the build that was used to generate it?
+
+   A: It is in /etc/YaST2/build on the System Under Test.
+
+
+6. Q: With twopence, how can I use a command that never returns,
+      e. g. "reboot"?
+
+   A: twopence, just like ssh, does not return until all command's open
+      file descriptors are closed. Start your command like this:
+
+          twopence_command $TARGET_SUT "reboot >/dev/null 2>/dev/null &"
+
+      This will start the command in the background while closing its
+      standard output and standard error file descriptors.
+
+      Note: the Susetest Python API provides a readymade function to
+      reboot a host, and wait for it to be ready again. It's called
+      reboot_and_wait().
+
+
+7. Q: I can't create or enter the jail. What is wrong?
+
+   A: There can be several reasons.
+
+      If you are trying to use the default $HOME/jail, and if $HOME
+      is NFS-mounted, then init-jail.sh cannot create files belonging
+      to root inside the jail. If this is the case, just pick
+      another directory outside of your home directory.
+
+      If your jail directory is inside a read-only directory,
+      or if this directory is inside a read-only mount, then
+      init-jail.sh will be unable to create the directory.
+      Change the permissions or the mount options,
+      or pick another directory.
+
+      If your jail directory is inside a noexec mount, then
+      init-jail won't be able to run the %pre and %post
+      installation scripts, and systemd-nspawn won't be able to
+      execute a shell inside the jail. Change the mount options,
+      or pick another directory.
+
+
+8. Q: I am building packages locally on my workstation.
+      basiliQA can't find the control package. What's happening?
+
+   A: If you get a message like
+          Package 'workshop-go-tests-control' not found.
+      that's usually because you compiled for the wrong system.
+
+      If you don't use a jail, the control package needs to be compiled
+      for the system that is installed on your workstation.
+
+      If you use a jail, the control package needs to be compiled
+      for SLE_12_SP1.
+
+
+9. Q: I am building packages locally on my workstation.
+      How can I test a package whose name has changed?
+
+   A: This can happen for example if a library has changed its name,
+      and you want to test the one with the new name.
+
+      Just remove the old library already installed on the hard disk with
+      the -U option of basiliqa-vms.sh, then install the one that you built
+      locally with the -I option.
+
+
+10. Q: I am building packages locally on my workstation.
+       Packages are not taken from my local build, why?
+
+    A: The packages you are trying to install may be taken from the
+       online repositories, instead of using your locally built version.
+
+       This can happen if your packages have dependencies and you did
+       not explicitely request to install those dependencies.
+
+       A solution is to remove the packages before you reinstall them.
+       It will remove their dependencies as well. To do that,
+       use the -U option of basiliqa-vms.sh.
+
+
+11. Q: I am testing a package for some other platform in QEmu emulation mode.
+       I get messages "Failed to connect socket" and "Permission denied". Why?
+
+    A: In order to emulate other processor architectures with QEmu,
+       you need to be able to create files in /var/lib/libvirt/qemu.
+
+       Make sure that you are in users group "qemu". Then issue
+       the commands:
+
+          # chmod g+w /var/lib/libvirt/qemu
+          # chgrp qemu /var/lib/libvirt/qemu
+
+       and restart your test.
+
+
+12. Q: I am testing a PowerPC package in QEmu emulation mode.
+       SSH connection to the VM is immediately closed. Why?
+
+    A: QEmu on PowerPC does not provide the random number generator
+       needed for SSH before version 2.5.
+
+       Please upgrade QEmu. For example, on Leap:
+
+          # zypper ar http://download.opensuse.org/repositories/Virtualization/
+       openSUSE_Leap_42.1/Virtualization.repo
+          # zypper ref
+          # zypper in qemu-ppc-2.5.0-319.1.x86_64
+
+       then restart your test.
+
+
+13. Q: Which setup is needed with a remote virtualization host?
+
+    A: You can test with a libvirt host that is not the same as the
+       one where the jail is.
+
+       To do that, you first need to modify the defaults in
+       /etc/basiliqa.conf for the libvirt URI, or to provide it on the
+       command line. A common choice is to use a qemu+tcp address
+       like qemu+tcp://1.2.3.4/system".
+
+       Then you need to allow basiliQA to copy the images and the hard
+       disks onto the virtualization host, by providing:
+        - the host name of the remote virtualization server;
+        - an account on that server where you have dropped
+          basiliQA's public key.
+
+       Last but not least, you have to find a way to let the
+       programs running in the jail to access the "fixed" network
+       on the virtualization host. There are many ways to achieve
+       this, for example:
+        - if the jail is running in a VM of the virtualization
+          host, just give it an IP address in the "fixed" network
+          and bridge its virtual networking card with the rest
+          of the "fixed" network;
+        - if the instances started by the virtualization host
+          have access to a real network, to which the computer
+          hosting the jail has access as well, just redefine
+          in /etc/basiliqa/basiliqa.conf the networks subnet
+          to match the real network. If there is already
+          a DHCP server on that network, declare it as well
+          in that configuration file, or you will have two
+          DHCP servers on that network.
+
+
+14. Q: Can I have a variable number of test machines?
+
+    A: Yes and no. You can have several "runs", each with a
+       different number of test machines.
+
+       However, the total number of runs, and the number of
+       machines in each run, are statically imposed by the
+       nodes file.
+
+       The same goes for the networks.
+

@@ -1,0 +1,85 @@
+# keypresses-ppc64le.exp
+# simulate keyboard interaction during installation
+# architecture ppc64le
+
+# Copyright (C) 2015,2016 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 2.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Wait for VM to start
+sleep 5
+
+# Connect to VM
+spawn virsh console basebox-iso2qcow2
+expect {
+  timeout {exit 1}
+  "Escape character is"
+}
+
+# Wait for GRUB menu
+set timeout 60
+expect {
+  timeout {exit 1}
+  "will be executed automatically in"
+}
+send "\x1B\[A\x1B\[A\x1B\[A\x1B\[A"
+send "e"
+
+# Edit kernel command line options
+expect {
+  timeout {exit 1}
+  "/boot/ppc64le/initrd"
+}
+send "\x1B\[B\x1B\[B\x1B\[B\x1B\[B\x1B\[D"
+send " ifcfg=eth0=dhcp autoyast=device://vda/autoinst.xml"
+send "\x18"
+
+# Wait for end of installation (allowing 5 hours)
+set timeout 18000
+expect {
+  timeout {exit 1}
+  # Hack for NTP + ppc64le (bsc#991756)
+  "Cannot update the dynamic configuration policy" {send "\r"; exp_continue}
+  "Started YaST2 Second Stage" {}
+  "Restarting system"
+}
+# Hack for tumbleweed: (bsc#995299)
+# "In /etc/fstab, there is a mount point for the directory" {send "\r"; exp_continue}
+
+# Let first reboot and initialization happen and log in
+set timeout 3000
+send ""
+expect {
+  timeout {exit 1}
+  "login:"
+}
+send "root\r"
+expect {
+  timeout {exit 1}
+  "Password:"
+}
+send "opensuse\r"
+
+# Shutdown the system cleanly
+expect {
+  timeout {exit 1}
+  "~ #"
+}
+send "init 0\r"
+expect {
+  timeout {exit 1}
+  "System halted" {}
+  "Reached target Shutdown"
+}
+send "\x1D"

@@ -1,0 +1,5 @@
+-------------------------------------------------------------------
+@@DATE@@ - @@EMAIL@@
+
+- version @@VERSION@@: created automatically by create-testsuite.sh
+

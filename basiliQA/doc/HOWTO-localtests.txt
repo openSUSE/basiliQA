@@ -1,0 +1,328 @@
+                         Testing locally with basiliQA
+                         =============================
+
+
+About this HOWTO
+----------------
+
+To use basiliQA, you create test packages, then you test them from
+the Jenkins web interface or locally. This short guide explains how
+to run your tests on your local workstation with virtual machines.
+To learn how to create the test packages, please refer to
+HOWTO-testpackages.txt. To learn how to run the tests from some
+Jenkins web User Interface, please refer to HOWTO-jenkinsui.txt.
+To learn how to run the tests on bare metal machines, please refer
+to HOWTO-statictests.txt.
+
+
+Installing
+----------
+
+To use basiliQA locally, you need to install "basiliqa-engine-vms"
+engine:
+
+  # zypper ar http://download.opensuse.org/repositories/basiliQA/openSUSE_Leap_42.2/basiliQA.repo
+  # zypper ref
+  # zypper in basiliqa-engine-vms
+
+(replace distribution name if needed)
+
+Main configuration file is /etc/basiliqa/basiliqa.conf. This
+XML file enables you to change many default settings. For
+example, the IP subnet range used for the "fixed" network
+by your VMS, that is 192.168.15.0/24 by default, can be
+changed to adapt to your local network setup.
+
+Now you need a bit of configuration: either with a confinement
+jail, or without. We recommend to use a confinement jail,
+the configuration is a bit more complex, but it is worth
+doing it.
+
+
+Installing without a jail
+-------------------------
+
+IMPORTANT NOTE: if you are planning to use a jail,
+you DO NOT need to do what is explained in this section.
+See below for instructions on how to use a confinement jail.
+
+First, you need to install "basiliqa" test suite helpers:
+
+  # zypper in basiliqa
+
+You will also need to prepare a SSH key to access the test VMs
+without password. Currently, twopence cannot use several identities
+for SSH protocol like ssh command is able to do. Because of that,
+you must change the contents of your .ssh/id_rsa file.
+
+The best way to acheive this without taking the risk to delete
+precious information is to create a dedicated account:
+
+  # useradd -G libvirt -m basiliqa
+  # passwd basiliqa
+
+Once you have done that, log out and in again as "basiliqa" user.
+Now you can safely import the identity of the standard test user:
+
+  $ mkdir .ssh
+  $ cp /usr/lib/basiliqa/init-jail/ssh_id_rsa .ssh/id_rsa
+  $ chmod -R go-rwx .ssh/
+
+
+Using a confinement jail
+------------------------
+
+IMPORTANT NOTE: if you installed directly on your working
+system as explained above, you DO NOT need to do what is
+explained in this section. Skip directly to next section.
+
+Instead of installing the control packages on the real system,
+you can install them in a "jail".
+
+The confinement jail uses systemd containers. It has several
+advantages:
+
+ - the test packages don't mix with the packages installed
+   on your workstation;
+ - you don't need to set up a special SSH identity to connect
+   to the system under tests;
+ - you can run basiliQA test suites even when they are not
+   built for the system that you are using on your workstation.
+
+It also has shortcomings:
+
+ - the jail is very easy to escape, it is by no way a security
+   mechanism;
+ - every time you update your system packages, you have to do it
+   both inside and outside of the jail;
+ - every time you set up something in /etc/basiliqa/*.conf,
+   you have to do it both inside and outside of the jail.
+
+To use a confinement jail:
+
+ - Prepare the jail with script init-jail.sh:
+      $ cd /usr/lib/basiliqa/init-jail
+      $ ./init-jail.sh --local
+   You can also specify the wished location of the jail directory:
+      $ ./init-jail.sh --local /var/tmp/basiliqa-jail
+   If not specified, the "jail" directory will be in your home
+   directory.
+   You may also want to add special packages to the jail, depending
+   on your needs, using one of the options:
+           --with-importer
+           --with-cucumber
+           --with-qatools
+           --with-machinery
+           --with-susemanager
+
+ - At the end, the script will suggest to add entries to /etc/fstab,
+   so that shared directories are mounted even after a reboot.
+   These shared directories enable basiliQA to share the test workspace
+   and the locally built packages between your workstation and the jail.
+   Do as instructed.
+
+ - Edit /etc/libvirt/libvirtd.conf on your workstation
+   so that it contains the following lines:
+      listen_tcp = 1
+      listen_addr = "127.0.0.1"
+      auth_tcp = "none"
+   and restart libvirtd service.
+
+ - (optional) You can declare permanently the location
+   of your jail in /etc/basiliqa/basiliqa.conf, like this:
+      <directories jail-root="/home/johndoe/jail" ...
+   If you do it, you don't need anymore to declare your jail
+   on the command line as explained below.
+
+
+Running a test suite built in IBS
+---------------------------------
+
+Still logged in as "basiliqa" user, you can run a test suite that
+you have previously built in IBS:
+
+  $ basiliqa-vms.sh -i sut=SLE_12-x86_64-default \
+                    tests-helloworld
+
+In the command above, replace "sut=" with the name of your test
+node, "SLE_12-x86_64-default" with the name of the test image,
+and "tests-helloworld" with the name of your test suite package.
+Repeat the -i (--image) option if your test suite uses more
+than one test node.
+
+Add -j (--jail) option if you are using a jail in your home
+directory, or -r (--jail-root) followed by the path to your
+jail if your jail is at an unusual location.
+
+For more details about basiliqa-vms.sh utility, please refer
+to REFERENCE-basiliqavms.txt.
+
+If you get authentication problems, you can solve them by declaring:
+
+  auth_unix_ro = "none"
+  auth_unix_rw = "none"
+
+in /etc/libvirt/libvirtd.conf, then restarting libvirtd:
+
+  # systemctl restart libvirtd
+
+
+Running a test suite built locally
+----------------------------------
+
+You may want to make the edit-rebuild-run cycle faster.
+To do that, you can build locally with "osc build" command,
+then run the locally built test suite.
+
+  $ osc build SLE_12_SP1 --no-verif
+
+  $ basiliqa-vms.sh -l \
+                    -i sut=SLE_12-x86_64-default \
+                    tests-helloworld
+
+For details about the osc command, please refer to OBS
+documentation.
+
+The -l (--local) option requests to use the RPMs build by OBS in
+/var/tmp/build-root. For more details about the basiliqa-vms.sh
+utility, please refer to REFERENCE-selenkinsvms.txt.
+
+You can also use the -I option to install third party packages
+that you rebuilt localy:
+
+  $ basiliqa-vms.sh \
+     --keep -i sut=SLE_12-x86_64-default \
+     --local -I sut=samba \
+     qa_test_samba
+
+In this example, "-I samba" installs on "sut" the "samba" package
+that you rebuilt locally with osc command.
+
+The SUTs will use in order of decreasing priority:
+ - first the subpackages built locally
+ - then the ones built in your IBS home directory (see below)
+ - then the ones available online from the "basiliQA" channel.
+
+
+Debugging
+---------
+
+There are several ways to get access to your virtual machines
+if something goes wrong. The most low level is probably
+to use commands like these:
+
+  $ export LIBVIRT_DEFAULT_URI=qemu:///system
+  $ virsh list
+  $ virsh console tests-helloworld-SUT
+
+The passwords are:
+
+  root/opensuse
+  testuser/opensuse
+
+
+Working in your IBS home project
+--------------------------------
+
+Test suites should be built in Devel:basiliQA:testsuites project
+of the Internal Build Service (IBS). However, if you want to
+experiment without touching this project, or if you don't have
+permission to write in it, you can build your test suite in
+your home project in IBS.
+
+First, log into http://build.suse.de, go to your home project, and
+create a devel_basiliqa package within that home project. Then
+add an _aggregate file with this content:
+
+  <aggregatelist>
+    <aggregate project="Devel:basiliQA">
+      <package>libssh</package>
+      <package>twopence</package>
+      <package>basiliqa</package>
+      <package>susetest</package> 
+    </aggregate>
+  </aggregatelist>
+
+Now you can create new packages in your home project,
+one per test suite.
+
+After that, you can run your test suites locally on your
+workstation:
+
+  basiliqa-vms.sh -p hmustermann ...
+
+or
+
+  basiliqa-vms.sh --home-project hmustermann ...
+
+This will take the packages from home:hmustermann in IBS.
+
+
+Using a local images repository
+-------------------------------
+
+If you do not want to use, or cannot use, the standard images
+repository that is on http://basiliqa.suse.de/images, you
+can set up your own images repository.
+
+If you use a confinement jail, you have to put this directory
+inside of the jail. For example, do
+
+  $ sudo systemd-nspawn -D $HOME/jail
+  # cd /srv
+  # wget -r --no-parent http://basiliqa.suse.de/images
+  # exit
+
+The newly created directory has to contain an images list.
+That's a file named "images.list", with lines like:
+
+  -  openSUSE_13.2  openSUSE_13.2-x86_64-default.qcow2
+
+You can use comments introduced by "#" sign. The file is made
+of three columns. The first column is a flag: - for regular
+images, or H for hidden images.
+The second column is the operating system family, and the
+third column is the name of the file containing the image.
+
+To use the local images repository, you can specify it
+on command line:
+
+  $ basiliqa-vms.sh -s /srv/images ...
+
+or you can set it up in /etc/basiliqa/basiliqa.conf:
+
+  <images source="/srv/images" />
+
+
+Re-running a test suite without restarting the virtual machines
+---------------------------------------------------------------
+
+The -K (--keep) option of basiliqa-vms.sh enables to keep the
+virtual machines after the tests. You can then consider the
+resulting setup as a static setup and re-run the test without
+redeploying the VMs.
+
+For more information, please refer to HOWTO-statictests.txt.
+
+
+Running tests that might disrupt network operation
+--------------------------------------------------
+
+The -v option of basiliqa-vms allows to run tests over virtio.
+
+Beware that there is currently no support for virtio in
+the cloud, so this can be done only locally or with static
+setups.
+
+
+Upgrading all packages before the tests start
+---------------------------------------------
+
+While it's better to use images with updates already applied,
+here is how you could upgrade all packages before the tests
+start:
+
+  $ basiliqa-vms.sh --image sut=SLE_12_SP1-x86_64-default \
+                    --extra-repo sut='${CHANNEL_UPDATES_SUT}' \
+                    --refresh sut=yes \
+                    tests-helloworld

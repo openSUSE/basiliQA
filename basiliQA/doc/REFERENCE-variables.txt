@@ -1,0 +1,423 @@
+                              Variables REFERENCE
+                              ===================
+
+
+About this reference manual
+---------------------------
+
+This is the reference of the environment variables provided by
+you, by Jenkins and by basiliQA to let the control scripts know
+about their environment. The dedicated API to access
+test environment (testenv) should be preferred.
+
+It covers the variables passed by basiliQA, the variables
+passed to basiliQA, and the variables passed by Jenkins.
+
+For an introduction to test packages, see HOWTO-testpackage.txt.
+For the API to access test environment, see REFERENCE-testenv.txt.
+
+
+Variables passed by basiliQA
+----------------------------
+
+  $REPORT
+  example value "/var/lib/jenkins/workspace/helloworld/junit-results.xml"
+
+The name of the file holding the JUnit XML report. You do not need that
+value if you use the jlogger helper function.
+
+
+  $RUN_NAME
+  example value "with_proxy"
+
+The name of the current run. It is identical to the name in "run"
+directive in the nodes file.
+
+
+  $TARGET_<node>
+  example name  $TARGET_SERVER
+  example value "ssh:10.162.177.33"
+
+A twopence "target" that can be used to communicate with test node.
+
+SSH is used in most cases to communicate with the tests nodes, so
+$TARGET_<node> is the same as ssh:$EXTERNAL_IP_<node>. In local
+tests, you can use virtio-serial, in that case it is not
+equivalent anymore, and the target starts with "virtio:".
+
+
+  $EXTERNAL_IP_<node>
+  example name  $EXTERNAL_IP_SERVER
+  example value "10.162.177.33"
+
+An IPv4 address for the node given by its capitalized name,
+that can be reached from the outside of the test cloud. All the
+network interfaces on the test nodes have at least an internal IP address.
+If they are on a network that has an exit gateway, like the default
+"fixed" network, they also get an external IP address. The external IP
+address gets mapped (natted) to the internal IP address by the cloud.
+
+In the OpenStack jargon, the internal IP is a "fixed IP" and the
+external IP is a "floating IP".
+
+
+  $INTERNAL_IP_<node>
+  example name  $INTERNAL_IP_SERVER
+  example value "192.168.1.4"
+
+An IPv4 address for the node given by its capitalized name,
+that is meaningful inside of the cloud. For the direct communication
+between test nodes, it is advised to use internal IP addresses, even
+though external ones should also work.
+
+
+  $IP6_<node>
+
+The IPv6 address for the node given by its capitalized name.
+Numbering starts at 0. If there is no IPv6 address
+associated to this network interface, this variable contains "N/A"
+
+With IPv6, there is no difference between internal and external addresses.
+If a gateway is available, all addresses have potential access to the outer
+world.
+
+
+  $INTERFACES_<node>
+  example name  $INTERFACES_ROUTER
+  example value "3"
+
+The number of interfaces for the node given by its capitalized name.
+Minimal value is 1, reflecting the fact that the fixed network is always
+available.
+
+
+  $EXTERNAL_IP_<node>_ETH<i>
+  example name  $EXTERNAL_IP_SERVER_ETH2
+  example value "10.162.177.35"
+
+The external IPv4 address of the <i>th networking card of node given by
+its capitalized name. Numbering starts at 0. If there is no external IP
+associated to this network interface, this variable contains "N/A".
+
+
+  $INTERNAL_IP_<node>_ETH<i>
+  example name  $INTERNAL_IP_SERVER_ETH2
+  example value "172.16.31.6"
+
+The internal IPv4 address of the <i>th networking card of node given by
+its capitalized name. Numbering starts at 0.
+
+This is the IP address assigned by the cloud, but it does not necessarily
+mean that, inside of the guest operating system, this card has been properly
+set up with this address.
+
+basiliQA removes the iptable rules established by OpenStack that would make
+the use of that address mandatory. This allows for more flexibility in
+testing. Still, it is adviced to use this address whenever possible.
+If you can't, please use private networks, so to avoid address conflicts.
+
+
+  $IP6_<node>_ETH<i>
+
+The IPv6 address of the <i>th networking card of node given by
+its capitalized name. Numbering starts at 0. If there is no IPv6 address
+associated to this network interface, this variable contains "N/A"
+
+With IPv6, there is no difference between internal and external addresses.
+If a gateway is available, all addresses have potential access to the outer
+world.
+
+# FIXME: the version of OpenStack cloud that we use does not yet support
+#        IPv6, so this setting and IPv6 in general can be used only
+#        for local tests with QEmu/KVM.
+
+
+  $NETWORK_<node>_ETH<i>
+  example name  $NETWORK_SERVER_ETH2
+  example value "private"
+
+The name of the network to which the <i>th networking card of the node
+given by its capitalized name is connected.
+
+
+  $DISKS_<node>
+  example name  $DISKS_NODE1
+  example value "1"
+
+The number of extra disks for the node given by its capitalized name.
+Minimal value is 0, for no extra hard disk.
+
+
+  $DISK_NAME_<node>_DISK<i>
+  example name  $DISK_NAME_SUT_DISK0
+  example value "/dev/vdb"
+
+The device name of the <i>th hard disk of the node given by
+its capitalized name.
+
+
+  $DISK_SIZE_<node>_DISK<i>
+  example name  $DISK_SIZE_SUT_DISK0
+  example value "20G"
+
+The size in gigabytes of the <i>th hard disk of the node given by
+its capitalized name.
+
+
+  $GATEWAY_IP_<network>
+  example name  $GATEWAY_IP_PRIVATE
+  example value "172.16.31.1"
+
+IPv4 address for the exit gateway of a network given by its capitalized
+name. IF there is no exit gateway for that network, this variable
+contains "N/A".
+
+
+  $SUBNET_IP_<network>
+  example name  $SUBNET_IP_PRIVATE
+  example value "172.16.31.0/24"
+
+IPv4 subnet in CIDR notation for a network given by its capitalized name.
+If there is no such subnet, this variable contains "N/A". The default
+"fixed" network always has a subnet.
+
+
+  $SUBNET6_IP_<network>
+  example name  $SUBNET6_IP_PRIVATE
+  example value "fd00:c0c0::/64"
+
+IPv6 subnet in CIDR notation for a network given by its capitalized name.
+If there is no such subnet, this variable contains "N/A".
+
+
+Variables passed by basiliQA that can also be used in the nodes file
+--------------------------------------------------------------------
+
+Some variables created by basiliQA can be used both from your nodes file
+and in your test suite. They are:
+
+  $SYSTEM_<nodename>
+  $FAMILY_<nodename>
+  $ARCH_<nodename>
+  $VARIANT_<nodename>
+  $CHANNEL_<channel>_<nodename>
+
+For more details about them, see REFERENCE-nodesfile.txt.
+
+
+Variables passed to basiliQA
+----------------------------
+
+You can use in your tests all the variables that you passed to basiliQA:
+
+  $PROJECT_NAME
+  example value "helloworld"
+
+The name of your test project.
+
+
+  $CONTROL_PKG
+  example value "tests-control"
+
+The name of the control subpackage.
+
+
+  $HOME_PROJECT
+  example value "hmustermann"
+
+(local tests only)
+The name of a home project in IBS.
+
+
+  $BUILD_ROOT
+  example value "/var/tmp/build_root"
+
+(local tests only)
+The location of a local OBS build
+
+
+  $EXECUTION_CONTEXT
+  example value "with_nanny"
+
+Different contexts allow to run same test suite several times in
+parallel.
+
+
+  $TEST_PARAMETERS
+  example value "TEST_PRECISE,NANNY"
+
+The behaviour of a test suite might depend on a series of
+parameters stored in environment variables. A single "export"
+of these variables is not enough, as they need to be passed
+through the jail, if there is one.
+
+
+  $IMAGE_SOURCE
+  example value "http://basiliqa.suse.de/images/"
+  usually taken from defaults
+
+The location to pick the .qcow2 hard disk image from.
+
+
+  $IMAGE_NAME_<node>
+  example name  $IMAGE_NAME_SUT
+  example value "SLE_12_SP1-x86_64-fips"
+
+The image name of a test node, of the form '<system>-<arch>-<variant>'.
+It matches the name of a file (with .qcow2 extension)
+on the download server.
+
+
+  $IMAGES_DIR
+  example value "/var/tmp/basiliqa/images"
+
+(local tests only)
+The location of the .qcow2 images once downloaded.
+
+
+  $JAIL_ROOT
+  example value "/var/lib/jenkins/jail"
+  usually taken from defaults
+
+Lets rpm and zypper use a confined jail. Use the path to the root of
+that jail, or "none" if you want to use the normal root "/".
+If you use the normal root, you need to allow rpm and zypper to be run
+with root priviledges by modifying /etc/sudoers.
+
+
+  $SUBNET_FIXED
+  example value "10.1.0.0/16"
+
+(local tests only)
+The IPv4 range to use for the fixed network.
+Defaults to "192.168.15.0/24".
+
+
+  $SUBNET6_FIXED
+  example value "fd00:1:2:3::/64"
+
+(local tests only)
+The IPv6 range to use for the fixed network.
+Defaults to "fc00:0:0:f::/64".
+
+
+  $REMOTE_VIRT_HOST
+  example value "1.2.3.4"
+  usually taken from defaults
+
+(local tests only)
+The IP address of the server running libvirtd. Default is it
+to be undefined.
+
+
+  $REMOTE_VIRT_USER
+  example value "basiliqa"
+  usually taken from defaults
+
+(local tests only)
+A user name on the server running libvirtd. Default is it
+to be undefined.
+
+
+  $REMOTE_DHCP_HOST
+  example value "1.2.3.4"
+  usually taken from defaults
+
+(local tests only)
+The IP address of the DHCP server of an external "fixed" network.
+Default is it to be undefined.
+
+
+  $REMOTE_DHCP_USER
+  example value "basiliqa"
+  usually taken from defaults
+
+(local tests only)
+A user name on the DHCP server of an external "fixed" network.
+Default is it to be undefined.
+
+
+  $TARGET_TYPE
+  example value "virtio"
+  usually taken from defaults
+
+(local tests only)
+The way to communicate between control node and SUTs. Default is "ssh".
+
+
+  $WORKSPACE_ROOT
+  example value /var/lib/jenkins/workspace
+  usually taken from defaults
+
+Each project uses a subdirectory of this directory to drop the files needed
+for testing. Usually, you don't change this when testing from the cloud.
+
+
+  $WORKSPACE
+  example value "/var/lib/jenkins/workspace/suite-helloworld"
+
+(local tests only)
+The absolute path of the workspace. Feel free to drop any file into
+that directory during your test.
+
+
+Variables passed by Jenkins
+---------------------------
+
+The variables passed by Jenkins can be used from your tests.
+However, please notice they will not be defined if you do
+not test in the cloud, for example if you test locally with VMs.
+
+*** TODO: we might emulate them during local tests if needed ***
+
+Explanations below are adapted from
+  https://wiki.jenkins-ci.org/display/JENKINS/Building+a+software+project
+under MIT license. Please refer to original document for more details.
+
+
+  $BUILD_NUMBER
+  example value "153"
+
+The current test number.
+
+
+  $BUILD_ID
+  example value "2015-08-22_23-59-59"
+
+The current test identificator.
+
+
+  $BUILD_URL
+  example value "http://basiliqa.arch.suse.de/job/suite-helloworld/153/"
+
+The URL where the results of this test can be found.
+
+
+  $JOB_NAME
+  example value "suite-helloworld"
+
+The name of the Jenkins project of this test. It's the third column of the
+Jenkins Dashboard main page.
+
+
+  $BUILD_TAG
+  example value "jenkins-suite-helloworld-153"
+
+A string of form jenkins-${JOB_NAME}-${BUILD_NUMBER}.
+Convenient to put into a file name for easier identification.
+
+
+  $EXECUTOR_NUMBER
+  example value "5"
+
+The number that identifies the current test executor. Unlike the number
+that can be seen on Jenkins Web UI, this number starts from 0, not 1.
+
+
+  $WORKSPACE
+  example value "/var/lib/jenkins/workspace/suite-helloworld"
+
+(while testing from Jenkins)
+The absolute path of the workspace. Feel free to drop any file into
+that directory during your test.
+

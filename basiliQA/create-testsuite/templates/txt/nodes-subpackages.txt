@@ -1,0 +1,4 @@
+node          @@NODE@@
+repository    ${CHANNEL_BASILIQA_@@NODE_UP@@}
+install       @@TYPE@@-@@PROGRAM@@-tests-@@NODE@@
+

@@ -1,0 +1,9 @@
+[Local_RPMs]
+name=Local_RPMs
+enabled=1
+autorefresh=0
+keeppackages=0
+priority=1
+baseurl=dir:///var/lib/basiliqa/RPMs
+path=/
+type=plaindir

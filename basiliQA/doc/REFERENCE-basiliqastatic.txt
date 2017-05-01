@@ -1,0 +1,139 @@
+                         basiliqa-static.sh REFERENCE
+                         ============================
+
+
+About this reference manual
+---------------------------
+
+This is the reference of the "basiliqa-static.sh" shell wrapper
+used during local tests with a static setup.
+
+It provides a general overview of the syntax used by this
+utility, then details how to get online help, how to run tests
+with a given project and how to run them with a test
+environment file.
+
+For an introduction to static tests, see HOWTO-statictests.txt
+
+
+Overview
+--------
+
+There are three ways to call basiliqa-static.sh:
+ o with -h or --help parameter,
+   it displays online help;
+ o with a project name,
+   it uses conventional paths for this project
+   to locate the test environment file
+ o with -e or --environment,
+   it uses the provided test environment file.
+
+
+First syntax: get help
+----------------------
+
+  -h
+  --help
+
+Displays an online help message.
+
+
+Second syntax: project-based
+----------------------------
+
+All parameters but the project name are optional.
+
+
+  -c <control-package>
+  --control-pkg <control-package>
+
+Specifies the name of the test control package.
+If not provided, defaults to "tests-control".
+
+
+  -j
+  --jail
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail in ~/jail.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -r <jail-root-directory>
+  --jail-root <rpm-root-directory>
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail given by
+its path.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -w <workspace-directory>
+  --workspace <workspace-directory>
+
+Specifies the directory to use during the test to store
+temporary files, results, etc. If not provided, defaults
+to a directory named like the test project inside of the
+"workspace root". The workspace root is normally
+/var/tmp/basiliqa/workspace, but this can be redefined in
+/etc/basiliqa/basiliqa.conf.
+
+
+  <project-name>
+
+Name of the source test package.
+
+
+Third syntax: environment file based
+------------------------------------
+
+All parameters but the environment file path are optional.
+
+
+  -c <control-package>
+  --control-pkg <control-package>
+
+Specifies the name of the test control package.
+If not provided, defaults to "tests-control".
+
+
+  -e <environment-file>
+  --test-environment <environment-file>
+
+Specifies the path to the test environment file. This
+file describes the setup of the static test. It can be
+located anywhere and is usually named "testenv.xml".
+For details on its syntax, see REFERENCE-testenv.txt.
+
+
+  -j
+  --jail
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail in ~/jail.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -r <jail-root-directory>
+  --jail-root <rpm-root-directory>
+
+Instead of installing the control packages on the real
+system, install them in a confinement jail given by
+its path.
+This directory must have been prepared previously with
+the script "init-jail.sh".
+
+
+  -w <workspace-directory>
+  --workspace <workspace-directory>
+
+Specifies the directory to use during the test to store
+temporary files, results, etc. If not provided, defaults
+to a directory named like the test project inside of the
+"workspace root". The workspace root is normally
+/var/tmp/basiliqa/workspace, but this can be redefined in
+/etc/basiliqa/basiliqa.conf.
+

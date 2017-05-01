@@ -1,0 +1,105 @@
+                         create-testsuite.sh REFERENCE
+                         =============================
+
+
+This is the reference of the create-testsuite.sh helper script that
+can help you generate the skeleton of a test suite, given a few options,
+like how many nodes you want and what are there names.
+
+For an introduction to test packages, see HOWTO-testpackage.txt.
+
+
+Installation
+============
+
+This script is packaged in "basiliqa-authoring" package. To install it, do
+
+   zypper in basiliqa-authoring
+
+It then resides in /usr/lib/basiliqa/create-testsuite/ directory.
+
+
+Syntax and output
+=================
+
+The syntax to call the script is:
+
+  /usr/lib/basiliqa/create-testsuite/create-testsuite.sh [<conf-file>]
+
+If omitted, the configuration file will be "create-testsuite.conf"
+in current directory.
+
+If the configuration file does not exist yet, a template is proposed.
+Please change options according to your needs.
+
+Once the options have been validated, the script creates the following
+three items in current directory:
+
+  tests-<name>.spec       RPM specfile
+  tests-<name>.changes    RPM changelog
+  tests-<name>-<version>  the test suite itself
+
+
+Options
+=======
+
+The options in configuration file follow usual <name>=<value> syntax, with
+comments denoted by "#" and quotes around string values.
+
+The option names are:
+
+  TYPE=workshop|tests|home
+
+The type of test suite you are creating. For test suites created in the
+official IBS project Devel:basiliQA:testsuites, but that are still
+experimental, use "workshop". For real test suites, use "tests".
+For experiments in your IBS home project, use "home". There are other
+prefixes that are reserved, like "qa_" for the former CTSC2 testsuites.
+
+  PROGRAM=<name>
+
+The name of the program or system component that you are testing.
+For example, if you are testing openvpn, put PROGRAM="openvpn" here.
+It is advised to use package names when it applies, i.e. when the
+test is focused on one given package Otherwise, just try to find
+a name that describes well what the test suite is doing.
+
+
+  SUMMARY=<text>
+
+A summary of what your test suite does.
+
+  PACKAGER=<name>
+
+Your name.
+
+  EMAIL=<email>
+
+Your email address.
+
+  LANGUAGE=bash|python
+
+The programming language for the main program on the control node.
+Currently available choices are "bash" and "python". For more
+information on programming test suites in Python with SuseTest
+helper library, see HOWTO-susetest.txt.
+There is no option for Ruby or C/C++ yet.
+
+  SUT_SUBPACKAGES=true|false
+
+Should we create subpackages for the systems under test?
+If "true", part of the testing logic is on the SUTs.
+If "false", all testing logic is on the control nodes.
+
+  FATAL_ERRORS=true|false
+
+Are test failures fatal?
+If "true", exit at first error.
+If "false", collect failures at the end.
+
+  NODES=<list>
+
+The list of nodes (of test machines) that will be involved in your tests.
+A common choice is NODES="client server" for two test machines named
+"client" and "server". Names are separated with spaces.
+

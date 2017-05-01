@@ -1,0 +1,8 @@
+[openSUSE-Tumbleweed]
+name=openSUSE-Tumbleweed
+enabled=1
+autorefresh=0
+baseurl=http://dist.suse.de/install/SLP/openSUSE-Tumbleweed/
+path=/
+type=yast2
+keeppackages=0

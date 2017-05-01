@@ -1,0 +1,88 @@
+# keypresses-x86_64.exp
+# simulate keyboard interaction during installation
+# architecture x86_64
+
+# Copyright (C) 2015,2016 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 2.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Wait for VM to start
+sleep 5
+
+# Connect to VM
+spawn virsh console basebox-iso2qcow2
+expect {
+  timeout {exit 1}
+  "Escape character is"
+}
+sleep 2
+send "\r"
+
+# Start installation (option 2)
+expect {
+  timeout {exit 1}
+  "Installation"
+}
+send "2\r"
+
+# Select normal kernel (option 1)
+expect {
+  timeout {exit 1}
+  "No Local APIC"
+}
+send "1\r"
+
+# Enter kernel command line
+expect {
+  timeout {exit 1}
+  "> linux initrd=initrd"
+}
+send " ifcfg=eth0=dhcp autoyast=device://vdb/autoinst.xml install=CD\r"
+
+# Wait for end of installation (allowing 30 minutes)
+set timeout 1800
+expect {
+  timeout {exit 1}
+  "Started YaST2 Second Stage" {}
+  "Restarting system"
+}
+# Hack for tumbleweed: (bsc#995299)
+# "In /etc/fstab, there is a mount point for the directory" {send "\r"; exp_continue}
+
+# Let first reboot and initialization happen and log in
+set timeout 300
+send ""
+expect {
+  timeout {exit 1}
+  "login:"
+}
+send "root\r"
+expect {
+  timeout {exit 1}
+  "Password:"
+}
+send "opensuse\r"
+
+# Shutdown the system cleanly
+expect {
+  timeout {exit 1}
+  "~ #"
+}
+send "init 0\r"
+expect {
+  timeout {exit 1}
+  "System halted" {}
+  "Reached target Shutdown"
+}
+send "\x1D"

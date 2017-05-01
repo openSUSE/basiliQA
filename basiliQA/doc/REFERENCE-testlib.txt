@@ -1,0 +1,226 @@
+                           TEST LIBRARY REFERENCE
+                           ======================
+
+
+This is the reference of the bash test library, a set of helper
+functions that help you do common tasks.
+
+This documentation first describes how to access the test library,
+then gives reference description of the following functions:
+
+  on control node:
+
+    ssh_access
+    run_test
+    (TODO: add more functions)
+
+  on systems under test:
+
+    (TODO: add more functions)
+
+  on both:
+
+    jlogger
+    (TODO: add more functions)
+
+For an introduction to the notions of control node and system
+under tests, see HOWTO-testpackage.txt.
+
+
+Accessing the library from the control node
+===========================================
+
+To access those functions from control node, first
+install package basiliqa by declaring:
+
+   PreReq: basiliqa
+
+in the spec file.
+
+Then source the library from your test code:
+
+   source /usr/lib/basiliqa/testlib/control-functions.sh
+
+
+Accessing the library from a system under tests
+===============================================
+
+To access those functions from the various systems
+under test, first install package basiliqa-testlib
+by declaring:
+
+   install basiliqa-testlib
+
+in the nodes file, or
+
+   PreReq: basiliqa-testlib
+
+in the spec file (preferred method).
+
+Then source the library from your test code:
+
+   source /usr/lib/basiliqa/testlib/sut-functions.sh
+
+
+control-functions.sh and sut-functions.sh - jlogger()
+=====================================================
+
+Role
+
+  The jlogger() function can help you generate log entries
+  to be published as the test results.
+
+Basic syntax
+
+  jlogger testsuite [-i <identifier>] [-t <text>] [-h <hostname>]
+
+    Start test suite
+
+  jlogger endsuite
+
+    End test suite
+
+  jlogger testcase [-i <identifier>] [-t <text>]
+
+    Start test case
+
+  jlogger success
+
+    End succesful test case
+
+  jlogger failure [-T <type>] [-t <text>]
+
+    End failed test case
+
+  jlogger error [-T <type>] [-t <text>]
+
+    End test case aborted due to internal error
+
+
+Example
+
+  jlogger testsuite -t "Testing the calculator functions"
+
+  jlogger testcase -t "verify addition"
+  jlogger success
+
+  jlogger testcase -t "verify division"
+  jlogger failure -T "Segmentation failure"
+
+  jlogger endsuite
+
+
+"testsuite" keyword
+
+  jlogger testsuite [-i <identifier>] [-t <text>] [-h <hostname>]
+
+    Start the test suite.
+
+  -i <identifier>
+
+    Arbitrary identifier for the test suite.
+    It is ignored by Jenkins, so there is not much point in using it.
+
+  -t <text>
+
+    Text describing the test suite.
+
+  -h <hostname>
+
+    Name of the host the test suite is run on. If absent, "localhost"
+    is used instead.
+
+
+"endsuite" keyword
+
+  jlogger endsuite
+
+    End the test suite.
+
+
+"testcase" keyword
+
+  jlogger testcase [-i <identifier>] [-t <text>]
+
+    Start a test case.
+
+  -i <identifier>
+
+    Arbitrary identifier for the test case. Jenkins works best
+    with dotted syntax. In Java world, that would be something
+    of the form `package.class.method`.
+
+  -t <text>
+
+    A text describing the test case.
+
+
+"success" keyword
+
+  jlogger success
+
+    Marks the successful end of a test case.
+
+
+"failure" keyword
+
+  jlogger failure [-T <type>] [-t <text>]
+
+    Marks the end of a test case that did not provide the
+    expected results.
+
+  -T <type>
+
+    An error type. It could be the name of an exception.
+
+  -t <text>
+
+    An error message.
+
+
+"error" keyword
+
+  jlogger error [-T <type>] [-t <text>]
+
+    Marks the end of a test case that could not be run because
+    of an internal error in the test suite.
+
+  -T <type>
+
+    An error type. It could be the name of an exception.
+
+  -t <text>
+
+    An error message.
+
+
+control-functions.sh - ssh_access()
+===================================
+
+Role
+
+  ssh_access helper function helps communicate between
+  systems under test via SSH.
+
+
+Basic syntax
+
+  ssh_access <src_user> <src_node> [<dest_user> <dest_node>]...
+
+
+Examples
+
+  ssh_access testuser client testuser server
+
+  allows to SSH from client node to server node as testuser.
+
+  ssh_access root scheduler root site1 root site2
+
+  allows to SSH from scheduler node to site1 and site2 nodes as root.
+
+
+control-functions.sh - run_test()
+=================================
+
+TBD
+

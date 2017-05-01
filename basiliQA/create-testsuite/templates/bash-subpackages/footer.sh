@@ -1,0 +1,2 @@
+jlogger endsuite
+exit $rc

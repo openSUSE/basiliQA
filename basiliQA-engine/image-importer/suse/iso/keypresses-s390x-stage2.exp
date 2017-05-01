@@ -1,0 +1,86 @@
+# keypresses-s390x-stage2.exp
+# simulate keyboard interaction during installation
+# architecture s390x - stage 2 (after reboot)
+
+# Copyright (C) 2015,2016 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 2.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Wait for VM to start
+sleep 5
+
+# Connect to VM
+spawn virsh console basebox-iso2qcow2
+expect {
+  timeout {exit 1}
+  "Escape character is"
+}
+sleep 2
+send "\r"
+
+# Main menu, select installation (option 1)
+set timeout 180
+expect {
+  timeout {exit 1}
+  "Exit or Reboot"
+}
+send "1\r"
+
+# Installation menu, select boot (option 2)
+expect {
+  timeout {exit 1}
+  "Start Rescue System"
+}
+send "2\r"
+
+# Boot menu, select partition vda2 (option 1)
+expect {
+  timeout {exit 1}
+  "vda2"
+}
+send "1\r"
+
+# Wait for end of installation (allowing 30 minutes)
+set timeout 1800
+expect {
+  timeout {exit 1}
+  "Welcome to SUSE Linux Enterprise Server"
+}
+
+# Let first reboot and initialization happen and log in
+set timeout 10
+send ""
+expect {
+  timeout {exit 1}
+  "login:"
+}
+send "root\r"
+expect {
+  timeout {exit 1}
+  "Password:"
+}
+send "opensuse\r"
+
+# Shutdown the system cleanly
+expect {
+  timeout {exit 1}
+  "~ #"
+}
+send "init 0\r"
+expect {
+  timeout {exit 1}
+  "System halted" {}
+  "Reached target Shutdown"
+}
+send "\x1D"

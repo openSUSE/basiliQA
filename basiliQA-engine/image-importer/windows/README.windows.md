@@ -202,7 +202,7 @@ reinject the modified configuration:
     unix$ ssh <user>@<ip>
     WIN> mkdir .ssh
     WIN> cd .ssh
-    WIN> echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDACq4gE5DkYy/QoYsZhA8klmziLOwXRsCo7OKoCeaYYgSPNwdsnqYrXTiYv8cJX3tqsXlu+h4BESokKIDIlRMHkULek8ctIpC5EeDDY3of/1fUwJKDf0xdYLtOT/Y4gHVYm6qAo23Mj0dtVVH+uv+O7I2j3VNW/8cAL3KDtV24jpa3fZUyf1G59xiENK0MR6UGNXYD0sSffstwJtFP+va1eRsepcp6Es612dfPJGnBBqpncIMg9lLuTe8HSCY7QIdciFdE0mk7MjHx1BpDrJ0M4KgqOxWh5Lpueflg0b9TERK1NgjN96gjBMbd+ln7vsESXbJSxmyXcEBXb5d6U6jr basiliqa@opensuse > authorized_keys
+    WIN> echo ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDimm3q0ZopDC4Qm+NF3kpNbD6759KP1FlintutW05YCur0KmPYU3YfQ4pVtYpR0VXDx7oBF3vPXkV0GhVgRwTQResATNUW9l7MnUYjhnetcvb/NZFMxEJQmsTd1MFaX9qtIIGf9iJ0s2rudgoYI2KyZjR0Td+Zw1dtv3FAeFhtx0YgMA2JpJ3ZiJ18fmWMaKH/GlBnsvYaCe9jS8O4D8tZxsVA+JuVMj9wVC5xiscMpmyju4Rha3tggbnLU6XfAXTT0kb4x0xqj5DysA8UxGoe/nL3NSFUj6a+Ssfs45t5y5r8CzrEsxRr/La1jX/D0bntt8eh5m0qAwUSsVvTPxMB jenkins@sibelius > authorized_keys
     WIN> exit
 ```
   __Don't use quotes in the echo command.__ Use `cls` to clear messed up screen.

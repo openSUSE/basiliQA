@@ -1,0 +1,433 @@
+                              Test packages HOWTO
+                              ===================
+
+
+About this HOWTO
+----------------
+
+To use basiliQA, you create test packages, then you test them from
+the Jenkins web interface or locally. This short guide explains how
+test packages are organised and which utilities you can use in them.
+
+To learn how to create your very first package, rather read
+HOWTO-firststeps.txt. To learn how to run your text package from the
+Jenkins User Interface, please refer to HOWTO-jenkinsui.txt.
+To learn how to run them on your workstation, please refer
+to HOWTO-localtests.txt.
+
+In complement to this HOWTO, you can also take your inspiration
+from existing test packages:
+ - gitlab: https://gitlab.suse.de/groups/basiliQA
+ - IBS:    https://build.suse.de/project/show/Devel:basiliQA:testsuites
+
+To add your own packages to one or both of these places, please ask
+for write permissions to ebischoff@suse.com.
+
+
+Test package layout
+-------------------
+
+Let's assume that you need to test an application named "helloworld".
+You have a source package named "helloworld-<version>.srpm" that is packaged
+via a spec file named "helloworld.spec". This spec file will define several
+binary packages:
+
+   helloworld
+       |
+       +------- (main)                  tested application
+       |
+       +------- tests-control           for Jenkins server
+       |
+       +------- tests-sut               for "sut" VM in the cloud
+
+Another (preferred) way to proceed is to have a separate source package
+for the test suite:
+
+   helloworld
+       |
+       +------- (main)                  tested application
+
+   tests-helloworld
+       |
+       +------- (main)                  (empty)
+       |
+       +------- tests-control           for Jenkins server
+       |
+       +------- tests-sut               for "sut" VM in the cloud
+
+If you are not testing any given application, for example if you are
+testing a system component or an application that is distributed
+over several components, you will only have the tests package:
+
+   tests-btrfs
+       |
+       +------- (main)                  (empty)
+       |
+       +------- tests-control           for Jenkins server
+       |
+       +------- tests-sut               for "sut" VM in the cloud
+
+
+The tests control package is usually named "tests-control",
+but the name is free. It is installed on the Jenkins server
+and is used to define the resources you need and to start the tests.
+
+Optionally, you can add binary packages to hold tests
+that will run on the Systems Under Tests (SUT) inside of the cloud.
+In our example, we define a package named "tests-sut" ("sut" meaning
+"System Under Test", but again the name is free.
+
+A very common layout is the following, used to test a
+client-server system:
+
+   tests-apache2
+       |
+       +------- (main)                  (empty)
+       |
+       +------- tests-control           for Jenkins server
+       |
+       +------- tests-client            for "client" VM in the cloud
+       |
+       +------- tests-server            for "server" VM in the cloud
+
+
+The control package
+-------------------
+
+The control package controls the execution of the tests. It follows
+this files layout:
+
+  /var/lib/basiliqa/
+    |
+    +- tests-helloworld/                same as source RPM name
+         |
+         +- tests-control               same as binary subpackage name
+              |
+              +- nodes                  "nodes file"
+              |
+              +- bin/                   tests directory
+                   |
+                   +- 01_basic_test.sh  first test
+                   |
+                   +- 02_options.sh     second test
+
+It contains a "node file", that defines the resources from the cloud
+that are needed for the tests. It also contains the test scripts that
+are run, one after the other, in alphabetic number
+
+In the example above, we have used numbers as prefix: 01_, 02_, etc.
+This trick enables to force the execution order, no matter the name
+of the test that follows.
+
+The /var/lib/basiliqa directory is provided by the
+"basiliqa" package. That package also provides a few utilities.
+Just declare:
+
+  %Package tests-control
+  Summary: Test control files for helloworld
+  Group:   QA
+  Prereq:  basiliqa
+
+Here is how the file list could look like:
+
+  %files tests-control
+  %dir /var/lib/basiliqa/tests-helloworld/tests-control/helloworld
+  %dir /var/lib/basiliqa/tests-helloworld/tests-control/bin
+  /var/lib/basiliqa/tests-helloworld/tests-control/nodes
+  /var/lib/basiliqa/tests-helloworld/tests-control/bin/01_basic_test.sh
+  /var/lib/basiliqa/tests-helloworld/tests-control/bin/02_options.sh
+
+The control package could easily break the basiliQA server:
+please be a good testing citizen, respect the layout explained above,
+and don't do things such as post-install scripts, for example.
+
+
+The nodes file
+--------------
+
+The "nodes file", located in the control package, describes the resources
+that you need for your tests: how many virtual machines, software that needs
+to be installed on them, network topology...
+
+Here is a minimal nodes file.  It just defines one test node,
+called "myvm":
+
+  node        myvm
+
+Here is the nodes file corresponding to the example described above:
+
+  node        sut
+  repository  http://download.opensuse.org/repositories/basiliQA:/testsuites/openSUSE_Leap_42.2/basiliQA:testsuites.repo
+  install     helloworld
+
+On the test node named "sut", we install the "helloworld" application
+package taken from the repository which is defined above.
+
+You can use shell variables from the nodes file and get a more concise syntax.
+The example above is better written.
+
+  node        sut
+  repository  ${CHANNEL_BASILIQA_SUT}
+  install     helloworld
+
+${CHANNEL_BASILIQA_SUT} would resolve to
+"http://download.opensuse.org/repositories/basiliQA:/testsuites/openSUSE_Leap_42.2/basiliQA:testsuites.repo".
+Similarly, ${PROJECT_NAME} would resolve to "tests-helloworld", and many
+other variables are available.
+
+One advantage of variables like ${CHANNEL_BASILIQA_SUT} or
+${CHANNEL_UPDATES_SUT} is that they adapt to the operating system chosen
+at run time. For example, your nodes file would still work with an
+openSUSE_13.1 test system.
+
+Here is an example with two nodes:
+
+  # First node
+  node        client
+  install     tests-scp-tests-client
+
+  # Second node
+  node        server
+  install     tests-scp-tests-server
+
+Comments are introduced with "# " or "; ". Each node has its own directives
+like "install". Here, we install two binary test packages,
+"scp-tests-client" and "scp-tests-server".
+
+Finally, here is a complicated example that defines two private networks,
+and two networking cards eth0 and eth1 on each node to access these private
+networks:
+
+  # Private network used to communicate with the Jenkins server
+  network     outside
+  subnet      172.22.0.0/16
+  dhcp        yes
+  gateway     yes
+
+  # Private network used to test our DHCP server
+  network     inside
+  subnet      172.31.0.0/16
+  dhcp        no
+  gateway     no
+
+  # Server node
+  node        server
+  ethernet    outside
+  ethernet    inside
+  install     dhcp-server
+
+  # Client node
+  node        client
+  ethernet    outside
+  ethernet    inside
+
+If you need to modify at run time some parameters that are defined
+in the nodes file, that is possible. For example,
+
+  export MODEL_CLIENT="m1.small"
+
+would select different virtual machine characteristics
+for "client" node.
+
+For a complete reference on the nodes file, see REFERENCE-nodesfile.txt.
+
+
+The test control scripts
+------------------------
+
+All executables in directory
+
+  /var/lib/basiliqa/<your project>/<your subpackage>/bin/
+
+are executed in sequence on the Jenkins server. It will usually be scripts
+written is some interpreted language (shell, python, ruby), but you can also
+use compiled programs.
+
+Here, you can perform all the tests, one after the other. Alternatively, you
+can put all the tests on one of the nodes, and just trigger them from one
+single line of a unique test control script (usually simply named "run.sh").
+
+You communicate with the test nodes through the SSH protocol. The IP address
+of your nodes is made available from environment variables. For example, if
+your node is named "sut" in the nodes file, and if you want to test the
+"uptime" command, your test control script would contain:
+
+  ssh -oStrictHostKeyChecking=no \
+    testuser@$EXTERNAL_IP_SUT uptime | tail -n -1
+
+The option "-oStrictHostKeyChecking=no" and the filter
+command "| tail -n -1" are here to avoid hassle from the SSH server
+fingerprint verification. Since the line above is a bit tedious to write
+and hard to read, you can either use a wrapper function,
+or use the provided twopence utility:
+
+  twopence_command -u testuser $TARGET_SUT uptime
+
+twopence can also inject files into the test node or extract files from
+the test node, like you would do with scp. It can also handle timeouts
+for commnd execution. For more information, please refer to
+twopence_command, twopence_extract, and twopence_inject man pages.
+Twopence also has a Python and a Ruby API (not documented yet), so you
+can use it directly from Python or Ruby scripts.
+
+"testuser" is a nonpriviledged user that is available in the virtual
+machines for running your tests as a normal user.
+
+If one of your scripts return a non-zero value, the virtual machines
+and the virtual networks in the cloud will not be destroyed. That lets
+you examine the problems by connecting to them from any computer with ssh.
+The "testuser" and "root" users both have "opensuse" as a password.
+
+
+Test environment
+----------------
+
+We have been using the variables $EXTERNAL_IP_SUT and $TARGET_SUT
+to get the IPv4 address used by ssh, or the "target" used by twopence.
+In addition to those variables provided by basiliQA, you can also use
+all variables provided by Jenkins. For example, you would use $WORKSPACE
+to get the name of a working directory where you can place any file
+needed by your testing logic.
+For a complete list of the available variables, see REFERENCE-variables.txt.
+
+The environment variables are nice, but they are not convenient to
+use from Python or Ruby, especially when you need to loop over several
+items, for example when you need to loop over all network interfaces.
+Also, their names might change in the future without prior notice.
+To address those problems, we provide also an API (in shell, Python, and Ruby)
+that allow you to query easily about the testing environment.
+Here is how you would query for $EXTERNAL_IP_SUT:
+
+  ext_ip=$(testenv node external-ip sut)
+
+The use of the "test environment" API is encouraged over the use of
+environment variables.
+For a detailed view on the test environment API, see REFERENCE-testenv.txt.
+
+
+Test packages installed on the nodes
+------------------------------------
+
+Instead of putting the tests on the Jenkins server, you can put them
+on one of the systems under test. It is purely optional.
+
+The file layout on the system under tests can look like:
+
+  /var/lib/basiliqa/
+    |
+    +- tests-helloworld/                same as source RPM name
+         |
+         +- tests-sut                   same as binary subpackage name
+              |
+              +- data/                  data directory
+              |   |
+              |   +- somedata.txt       some test data file
+              |
+              +- bin/                   tests directory
+                  |
+                  +- test1.sh           first test
+                  |
+                  +- test2.sh           second test
+
+although there is no special need to do like that.
+
+You can trigger these remote test scripts from a script named
+"run.sh" in the control package that can look like:
+
+  #! /bin/bash
+
+  bindir=/var/lib/basiliqa/tests-helloworld/tests-sut/bin
+  error=0
+
+  for test in test1 test2; do
+    twopence_command -u testuser $TARGET_SUT \
+      "cd $bindir && ./${test}.sh"
+    [ $? -eq 0 ] || error=1
+  done
+
+  exit $error
+
+The nodes file can look like:
+
+  node          vm
+
+  #             tested application itself
+  install       someapp
+
+  #             test package installed on the VM
+  install       tests-someapp-tests-vm
+
+In the spec file, the test package installed on node "vm"
+can look like:
+
+  %files tests-vm
+  %defattr(-,root,root)
+  %dir /var/lib/basiliqa/tests-helloworld/tests-vm
+  %dir /var/lib/basiliqa/tests-helloworld/tests-vm/bin
+  %dir /var/lib/basiliqa/tests-helloworld/tests-vm/data
+  /var/lib/basiliqa/tests-helloworld/tests-vm/bin/test1.sh
+  /var/lib/basiliqa/tests-helloworld/tests-vm/bin/test2.sh
+  /var/lib/basiliqa/tests-helloworld/tests-vm/data/somedata.txt
+
+
+Creating a JUnit test report
+----------------------------
+
+Jenkins can gather and display test reports in JUnit XML format.
+
+Since it is a bit difficult to produce an XML report, your test
+package can simply output test case information prefixed with
+special keyword "###junit". This information will be collected and
+used to build a JUnit test report. Here is an example of output
+from a test package:
+
+  ###junit testsuite text="Testing the calculator functions"
+
+  ###junit testcase text="verify addition"
+  Additions. Let's try 5 + 3...
+  Works! Got 8.
+  ###junit success
+
+  ###junit testcase text="verify array operations"
+  Array operations. Let's try A[-1] = 5...
+  Ouch! Got Segmentation failure, expected Out of bounds.
+  ###junit failure type="Segmentation failure"
+
+  ###junit endsuite
+
+Normal output like "Additions. Let's try 5 + 3..." is simply ignored.
+For more details about this output format, see REFERENCE-junitformat.txt.
+
+Any programming language can produce such output. However, if your
+tests are written in shell, you might find more convenient to use
+the jlogger function:
+
+  $ jlogger testcase -t "verify addition"
+  ####junit testcase time="2015-03-18T17:12:48.686" text="verify addition"
+
+As this example shows, jlogger has produced the time stamp needed
+for computing the duration of the test case. This function is available
+both on the Jenkins server and on the system under test.
+
+Instead of using flat text format for your test results, you can
+directly create you own JUnit XML results. Just make sure that the
+resulting file resides in your $WORKSPACE directory on the basiliQA
+server and is named junit-results.xml.
+
+
+The test library
+----------------
+
+The test library contains a range of helper functions that do
+common tasks. We already met one of its members, jlogger.
+
+Another example function: ssh_access lets a user on a SUT
+connect via SSH as another user on another SUT by copying the
+public keys over, like this:
+
+  # Let testuser@SUT1 ssh as testuser@SUT2
+  ssh_access testuser SUT1 testuser SUT2
+
+For more information about the bash test library, see
+REFERENCE-testlib.txt.
+

@@ -1,0 +1,69 @@
+                               First steps HOWTO
+                               =================
+
+
+About this HOWTO
+----------------
+
+This short guide is a kind of crash course into basiliQA for the very
+beginners. Alone, it will not give you all details about writing
+test suites with basiliQA, but it will hopefully give you a good start.
+
+
+Creating your first test suite
+------------------------------
+
+To create your first test suite, please install on your workstation
+the package basiliqa-authoring:
+
+  # zypper ar http://download.opensuse.org/repositories/basiliQA/openSUSE_Leap_42.2/basiliQA.repo
+  # zypper ref
+  # zypper in basiliqa-authoring
+
+(adapt the repository URL to the distribution you use).
+
+Go to some empty directory, and then type the following command:
+
+  $ /usr/lib/basiliqa/create-testsuite/create-testsuite.sh
+
+The program will open a text editor to let you modify the creation options.
+Most important setting is the NODES= line, which defines the number of
+nodes (of test machines) and their names. Default is one client and one
+server.
+
+Once you save the options, the test suite gets created. You will see
+in current directory a spec file, a changes log, and a directory
+containing the test suite itself. All of this can already be committed:
+ - in some release management system, for keeping the sources under revision control;
+ - to some build service, for building and publishing the test suite.
+
+For more information about "create-testsuite.sh" utility, please refer to
+REFERENCE-createtestsuite.txt.
+
+
+Building your first test suite
+------------------------------
+
+(to be written)
+
+
+Running your first test suite
+-----------------------------
+
+Once your test suite is built, you can use it from some Jenkins server
+(which needs to be configured), or locally on your workstation.
+We'll concentrate on second possibility here.
+
+(to be written)
+
+
+Modifying your test suite
+-------------------------
+
+At this point, you just created an empty skeleton. You will want to
+modify it in order to create real tests.
+
+To see how basiliQA test suites are packaged, please refer to
+HOWTO-testsuites.txt. This will give you the needed theoretical knowledge
+so you know what's going on here, and which files to change.
+

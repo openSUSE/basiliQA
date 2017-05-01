@@ -1,0 +1,7 @@
+<network ipv6='yes'>
+  <name>...</name>
+  <bridge name='...' stp='off'/>
+  <mac address='...'/>
+  <ip address='...' prefix='...'/>
+</network>
+

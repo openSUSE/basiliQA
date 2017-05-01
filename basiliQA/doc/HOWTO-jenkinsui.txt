@@ -1,0 +1,16 @@
+                         Jenkins User Interface HOWTO
+                         ============================
+
+
+About this HOWTO
+----------------
+
+To use basiliQA, you create test packages, then you test them from
+the Jenkins web interface or locally. This short guide explains how
+to run your tests from some Jenkins User Interface. To learn how to
+create the test packages, please refer to HOWTO-testpackages.txt.
+To learn how to create local tests, please refer to
+HOWTO-localtests.txt.
+
+This short guide explains:
+(to be written)

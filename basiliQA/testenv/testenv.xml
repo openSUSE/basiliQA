@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<testenv name="tests-dhcp">
+
+  <network name="fixed" context="mytest" parameters="" subnet="192.168.1/24" subnet6="N/A" gateway="192.168.1.1" />
+
+  <network name="private" subnet="192.168.8/24" subnet6="fd00:c0c0::/64" gateway="N/A" />
+
+  <node name="client" target="ssh:10.10.10.3" internal-ip="192.168.1.3" external-ip="10.10.10.3" ip6="fd00:c0c0::3">
+    <interface name="eth0" internal-ip="192.168.1.3" external-ip="10.10.10.3" ip6="N/A" network="fixed" />
+    <interface name="eth1" internal-ip="192.168.8.3" external-ip="N/A" ip6="fd00:c0c0::3" network="private" />
+  </node>
+
+  <node name="server" target="ssh:10.10.10.4" internal-ip="192.168.1.4" external-ip="10.10.10.4" ip6="fd00:c0c0::4">
+    <interface name="eth0" internal-ip="192.168.1.4" external-ip="10.10.10.4" ip6="N/A" network="fixed" />
+    <interface name="eth1" internal-ip="192.168.8.4" external-ip="N/A" ip6="fd00:c0c0::4" network="private" />
+    <disk name="/dev/vdb" size="20G" />
+  </node>
+
+</testenv>

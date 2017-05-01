@@ -1,0 +1,1 @@
+    @@NODE@@ = config.target("@@NODE@@")

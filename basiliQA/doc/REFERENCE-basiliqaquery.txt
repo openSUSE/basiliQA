@@ -1,0 +1,138 @@
+                          basiliqa-query.sh REFERENCE
+                          ===========================
+
+
+About this reference manual
+---------------------------
+
+This is the reference of the "basiliqa-query.sh" shell wrapper
+used to find your way in basiliQA testsuites.
+
+It provides a general overview of the syntax used by this
+utility, then details how to get various information.
+
+
+Overview
+--------
+
+There are five ways to call basiliqa-query.sh:
+ o with -h or --help parameter,
+   it displays online help;
+ o with -i or --images,
+   it displays a list of available test images;
+ o with -n or --nodes,
+   it shows which nodes are used by a test suite;
+ o with -t or --testsuites,
+   it provides a list of testsuites;
+ o with -e or --external-ip,
+   it provides the IP address that lets you ssh to the machine
+
+Example commands could be:
+
+  $ basiliqa-query.sh -t
+  $ basiliqa-query.sh -i
+  $ basiliqa-query.sh -n tests-apache2
+  $ basiliqa-query.sh -e tests-apache2 client
+
+
+First syntax: get help
+----------------------
+
+  -h
+  --help
+
+Displays an online help message.
+
+
+Second syntax: get a list of available disk images
+--------------------------------------------------
+
+  -a
+  --available-images
+
+Displays a list of all images currently available on image source.
+
+
+  -s <image-url>
+  --image-source <image-url>
+
+Specifies the place where the qcow2 images reside. This can
+either be a remote directory (URL starting with http://),
+or a local images repository (file name starting with /).
+
+
+  -j
+  --jail
+
+Useful if you have a local images repository inside
+a confinement jail in ~/jail.
+
+
+  -r <jail-root-directory>
+  --jail-root <rpm-root-directory>
+
+Useful if you have a local images repository inside
+a confinement jail given by its path.
+
+
+-s, -j and -r options, if not provided, default to the values
+specified in /etc/basiliqa/basiliqa.conf.
+
+
+Third syntax: get list of nodes
+-------------------------------
+
+  -n <testsuite>
+  --nodes <testsuite>
+
+Tells you the names of the nodes used by a given test suite
+(for example, "client" and "server").
+
+
+Fourth syntax: get list of testsuites
+-------------------------------------
+
+  -t
+  --testsuites
+
+Displays a list of test suites, with their current status
+(ready, or in development).
+
+
+Fifth syntax: get external IP address of node
+---------------------------------------------
+
+  -e <testsuite>[-<context>] <node>
+  --external-ip <testsuite>[-<context>] <node>
+
+After you have run a test suite, asks the external IP
+of one of the nodes.
+
+This is valid only if the test suite failed, or if it
+succeeded but you requested to keep the systems under test.
+
+If you used an execution context, add it to name of test
+suite, for example:
+  basiliqa-query.sh -e tests-apache2-after client
+
+Note: this external IP is also written on the screen
+as you run the test suite.
+
+
+  -j
+  --jail
+
+Useful if you have a local images repository inside
+a confinement jail in ~/jail.
+
+
+  -r <jail-root-directory>
+  --jail-root <rpm-root-directory>
+
+Useful if you have a local images repository inside
+a confinement jail given by its path.
+
+
+-j and -r options, if not provided, default to the values
+specified in /etc/basiliqa/basiliqa.conf.
+

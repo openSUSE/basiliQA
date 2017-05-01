@@ -1,0 +1,461 @@
+                              Nodes file REFERENCE
+                              ====================
+
+
+About this reference manual
+---------------------------
+
+This is the reference of the "nodes file" used in basiliQA packaging.
+
+It covers the general structure of the nodes file, the variables
+that you may use in the nodes file, the various directives that
+can be used in the nodes file, and the way to override the nodes
+file settings at run time.
+
+For an introduction to test packages, see HOWTO-testpackage.txt.
+
+
+General structure
+-----------------
+
+Directives are of form
+
+  name        <value1> <value2> ... <valueN>
+
+This is equivalent to
+
+  name        <value1>
+  name        <value2>
+  ...         ...
+  name        <valueN>
+
+Empty lines and lines beginning with "# " or "; " are ignored.
+Leading spaces (indentation) are ignored. Indentation is not
+mandatory but helps clarity.
+
+For all boolean parameters, "off" is synonym of "no" and
+"on" is synonym of "yes".
+
+Directives are defined in "groups". Currently defined groups are "node"
+group and "network" group. The "node" group starts with a "node"
+keyword and the "network" group starts with a "network" keyword.
+In addition to those groups, you can have global settings
+(currently, only "keep" setting).
+
+Order of groups is not important. Inside of a group, most directives are
+optional, and order may be important, depending on the directive.
+
+The groups themselves can be grouped in "runs". A run is a separate
+deployment of nodes and networks. The order of runs is identical to
+order of execution.
+
+
+Example nodes file
+------------------
+
+  # Direct run
+  run direct
+    node  client
+      install iperf
+    node server
+      install iperf
+
+  # Run with proxy
+  run with_proxy
+    node client
+      install iperf
+    node proxy
+    node server
+      install iperf
+
+
+Shell variables used in nodes file
+----------------------------------
+
+Shell variables can be used as part of the values in the nodes file.
+They can also be used by your testsuite on the control node, in addition
+to those described in REFERENCE-variables.txt.
+
+Variables currently defined in the nodes file are:
+
+
+  $PROJECT_NAME
+  example value "tests-helloworld"
+
+Name of the project. It is identical to test package RPM spec file name.
+
+
+  $SYSTEM_<nodename>
+  example name $SYSTEM_SUT
+  example value "SLE_12_SP1_GMC3_Build4797"
+
+Distribution chosen at run time.
+<nodename> is capitalized name given in "node" directive.
+
+
+  $FAMILY_<nodename>
+  example name $FAMILY_SUT
+  example value "SLE_12_SP1"
+
+Generic family of distribution chosen at run time.
+For example, the family of "SLE_12_SP1_GMC3_Build4797" is
+"SLE_12_SP1". The mapping between systems and families
+is defined in the "images.list" file on images server.
+<nodename> is capitalized name given in "node" directive.
+
+
+  $ARCH_<nodename>
+  example name $ARCH_CLIENT
+  example value "x86_64" or "i586"
+
+Architecture chosen at run time.
+<nodename> is capitalized name given in "node" directive
+
+
+  $VARIANT_<nodename>
+  example name $VARIANT_SUT2
+  example name "fips"
+
+Variant chosen at run time, usually "default".
+<nodename> is capitalized name given in "node" directive.
+
+
+  $CHANNEL_<channel>_<nodename>
+  example name  $CHANNEL_UPDATES_CLIENT
+  example value "http://download.opensuse.org/update/leap/42.2/oss/openSUSE:Leap:42.2:Update.repo"
+
+The URLs of one or more .repo files, with a space between the URLs.
+These .repo files describe a channel where to get the packages from,
+on all architectures.
+
+Currently, there values defined for <channel> are:
+ - BASILIQA, mostly used for test packages
+ - UPDATES, for updates to the base system
+ - HAFACTORY, for HA Factory
+ - RUBYEXTENSIONS, the Ruby extensions
+ - NETWORKUTILITIES, the Network Utilities
+
+<nodename> is capitalized name given in "node" directive.
+
+In addition to those optional channels, on each image, there are the .repo
+files that were used during the installation of the system, so you do not
+need to declare those ones.
+
+
+Runs
+----
+
+  run      <run_name>
+
+Declaring a run is not mandatory. If this declaration is omitted,
+there is only one run with name "default". Each run can have its own
+global settings and "node" and "network" sections.
+
+
+Global settings
+---------------
+
+  keep     <yes or no>
+
+By default, if the tests have been successful, the nodes, the networks and
+the disks are removed from the cloud or your workstation. If "keep yes" is
+declared, the nodes, the networks and the disks are not removed from the
+cloud or from your workstation after the tests, no matter they have failed
+or not.
+
+In all cases, the previous instance of the nodes, of the networks and of
+the disks are destroyed when the same test is run again.
+
+Default value: "no".
+
+
+"node" group
+------------
+
+  node        <name>
+
+Defines the name of the node, i.e. of one of the virtual machines
+participating in the test. It is a free string, with the exclusion
+of "-" character.
+
+Synonym: "vm".
+
+
+  model       <flavor>
+
+Defines the OpenStack "flavor" of the virtual machine: size of memory,
+size for disks, and so on. Usual flavors are "m1.tiny", "m1.small",
+"m1.smaller", "m1.medium", "m1.large" and "m1.xlarge". See OpenStack
+documentation for the details.
+
+Synonym: "flavor", "flavour". Default value: "m1.smaller".
+
+
+  ethernet    <network>
+
+Given for the first time, defines the connection of the first network
+interface eth0. Successive declarations define eth1, eth2, etc.
+
+The network name must match the name of a network defined by a "network"
+directive, or "fixed" for the default network.
+
+Synonyms: "eth", "ethernet-card", "eth-card", "nic".
+
+
+  disk        <size>
+
+Given for the first time, defines the connection of the first additional
+hard disk /dev/vdb. Successive declarations define /dev/vdc, /dev/vdd, etc.
+The size is a number followed by "G" and is expressed in gigabytes.
+
+The new disks come unpartitioned and unformatted. You have to partition them,
+to format the partitions, and to mount the formatted partitions manually
+if you want to store files on them.  The disk is deleted at the end, unless
+the test fails or you request to keep the VM.
+
+Synonyms: "hard-disk", "volume".
+
+
+  uninstall   <package>
+
+Defines a RPM package to uninstall with zypper.
+
+Synonyms: "uninstall-package", "remove", "remove-package".
+
+
+  repository  <url>
+
+Defines the URL of a ".repo" file for zypper that will be installed on
+the node. Usually starts with "http://". Any repository defined so will
+get priority 1, i.e. the packages from that repository will be preferred
+to packages on normal repositories.
+
+Synonym: "repo".
+
+
+  install     <package>
+
+Defines a RPM package to be installed with zypper. This package must
+exist in one of the repositories residing on the operating system image
+or installed afterwards with the "repository" directive. It can either
+be a normal applicative package or some test package of your own.
+
+Synonyms: "install-package", "package".
+
+
+  refresh     <yes or no>
+
+If yes, requests to refresh and upgrade all the installed packages
+before starting the tests. Please also add update channels when using
+this option with "yes".
+
+It is generally a bad idea to do "zypper ref && zypper up" inside
+the test suite, or to use this setting in the nodes file: better let
+the choice to the user to override it at run time.
+
+Synonyms: "upgrade", "refresh-packages", "upgrade-packages". Default
+value: "no".
+
+
+"network" group
+---------------
+
+  network     <name>
+
+Defines the name of a private network. This can be useful if your test
+sends broadcasts (for example with DHCP or RADVD) or any other type of
+network data that can cause problems to other tests running on the
+network at the same time. This can also be useful if you need a specific
+test topology, or to use IP addresses that you are not supposed to use.
+
+The name is a free string, with the exclusion of "-"
+character. Do not use "fixed" as this is the name of the default network.
+
+
+  subnet      <cidr>
+
+Defines the IPv4 address range used by the nodes connected to this network.
+For example, you could use "172.31.0.0/16".
+You can define zero or one IPv4 subnet in your network.
+
+Please use private addresses, i.e. subnets included in "10.0.0.0/8",
+"172.16.0.0/12" and "192.168.0.0/16". Do not use the range used
+for the fixed network, which might depend on the test cloud.
+
+
+  subnet6     <cidr>
+
+Defines the IPv6 address range used by the nodes connected to this network.
+For example, you could use "fd00:c0c0::/64".
+Currently, you can define zero or one IPv6 subnet in your network.
+
+Please use private addresses, i.e. subnets included in "fd00::/8".
+Do not use the range used for the fixed network, which might depend
+on the test cloud.
+
+
+  dhcp        <yes or no>
+
+If "yes", the test cloud will provide a DHCP server on that network.
+The exact extent of the DHCP range is determined automatically
+by the cloud within the subnet.
+
+basiliQA removes the OpenStack iptables that mandate you to use the
+addresses chosen by the cloud for your nodes. Still, it is better
+to use them; see the instructions about writing test cases to
+learn how to get this information.
+
+Synonyms: "dhcp-pool", "pool". Default value: "yes".
+
+
+# FIXME: not implemented yet: be able to specify a DHCP pool
+#                             instead of putting "yes":
+#   dhcp     172.22.0.2-172.22.0.25
+
+
+# FIXME: not implemented yet: RADVD and DHCPv6
+
+
+  gateway     <yes or no>
+
+If "yes", the test cloud will provide a router that enables to reach
+computers outside of the test cloud. It will also associate
+"floating IP" addresses to all the nodes on that network.
+
+The exact IP address of that gateway is determined automatically
+by the cloud within the subnet.
+
+If you use a DHCP server provided by the cloud on that subnet, the
+address of the gateway will be announced to the DHCP clients.
+Otherwise, you must provide this information yourself: see the
+instructions about writing test cases to learn how to get the
+address of the gateway.
+
+Synonym: "gw". Default value: "yes".
+
+
+# FIXME: not implemented yet: be able to specify the address of the gateway
+#                             instead of putting "yes":
+#   gateway  172.22.0.1
+
+
+# FIXME: not implemented yet: IPv6 gateway options
+
+
+Variables that can override node files directives
+-------------------------------------------------
+
+The following variables can be useful if you want to temporarily
+change some settings, without rebuilding the control package that
+contains the nodes file.
+
+
+  $KEEP_IF_SUCCESS
+  example value: "yes"
+
+Whether the nodes and the networks should be kept or not after
+a successful test. Overrides the "keep" global directive in the
+nodes file.
+
+
+  $UNINSTALL_<nodename>
+  example name: $INSTALL_SUT1
+  example value: "libtirpc1"
+
+The name of one or more packages to uninstall.
+Overrides the "uninstall" directives for one given node in the nodes file.
+
+
+  $REPO_<nodename>
+  example name: $REPO_CLIENT
+  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.1/home:jdoe.repo"
+
+The URL of one or more repositories.
+Overrides the "repo" directives for one given node in the nodes file.
+
+
+  $EXTRA_REPO_<nodename>
+  example name: $EXTRA_REPO_CLIENT
+  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.2/home:jdoe.repo"
+
+The URL of one or more repositories.
+This value does not fully override the "repo" directives from the nodes file.
+It is prepended to the list of repositories, the old value is not lost.
+
+
+  $INSTALL_<nodename>
+  example name: $INSTALL_SUT2
+  example value: "grep awk sed"
+
+The name of one or more packages to install.
+Overrides the "install" directives for one given node in the nodes file.
+
+
+  $REFRESH_<nodename>
+  example name: $REFRESH_HOST
+  example value: "yes"
+
+If yes, requests to refresh and update all packages before starting the
+tests. Overrides the "refresh" directive for one given node in the nodes
+file.
+
+
+  $NIC_<nodename>
+  example name: $NIC_SERVER
+  example value: "fixed"
+
+The name of one or more networks to which the node is attached.
+Overrides the "ethernet" directives for one given node in the nodes file.
+
+
+  $MODEL_<nodename>
+  example name: $MODEL_PROXY
+  example value: "m1.tiny"
+
+The OpenStack flavor to use for the node memory, number of CPUs, etc.
+Overrides the "model" directives for one given node in the nodes file.
+
+
+  $SUBNET_<networkname>
+  example name: $SUBNET_PRIVATE
+  example value: "10.1.2.0/28"
+
+The IPv4 subnet on a network.
+Overrides the "subnet" directive for one given network in the nodes file.
+
+
+  $SUBNET6_<networkname>
+  example name: $SUBNET6_OUTSIDE
+  example value: ""fd00:c0ca:c01a::/64".
+
+The IPv6 subnet on a network.
+Overrides the "subnet6" directive for one given network in the nodes file.
+
+
+  $DHCP_<networkname>
+  example name: $DHCP_MYNET
+  example value: "yes"
+
+Whether to provide a DHCP server on a network or not.
+Overrides the "dhcp" directive for one given network in the nodes file.
+
+
+  $GATEWAY_<networkname>
+  example name: $GATEWAY_NET2
+  example value: "no"
+
+Whether to provide a gateway on a network or not.
+Overrides the "gateway" directive for one given network in the nodes file.
+
+
+Overriding the settings during local tests
+------------------------------------------
+
+Instead of variables, you may use command line options to override the
+nodes file settings, when testing locally.
+
+For example, -K or --keep of basiliqa-vms.sh enables to override
+the "keep" directive of the nodes file.
+
+For more details, see REFERENCE-basiliqavms.sh.
+

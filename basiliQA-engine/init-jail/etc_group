@@ -1,0 +1,11 @@
+root:x:0:
+lp:x:7:
+www:x:8:
+mail:x:12:
+news:x:13:
+uucp:x:14:
+dialout:x:16:
+lock:x:54:
+man:x:62:
+users:x:100:
+nobody:x:65533:

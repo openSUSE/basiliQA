@@ -1,0 +1,84 @@
+# keypresses-aarch64.exp
+# simulate keyboard interaction during installation
+# architecture aarch64
+
+# Copyright (C) 2015,2016 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 2.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Wait for VM to start
+sleep 5
+
+# Connect to VM
+spawn virsh console basebox-iso2qcow2
+expect {
+  timeout {exit 1}
+  "Escape character is"
+}
+sleep 2
+
+# Enter to edit mode for Installation menuentry
+expect {
+  timeout {exit 1}
+  "Installation"
+}
+# Enter to Grub command line interface
+send "c"
+
+# Enter kernel command line
+expect {
+  timeout {exit 1}
+  "grub>"
+}
+# Enters bootparams in command line (hard to edit bootmenu)
+send "linux /boot/aarch64/linux splash=silent ifcfg=eth0=dhcp autoyast=device://vda/autoinst.xml install=CD\r"
+send "initrd /boot/aarch64/initrd\r"
+send "boot\r"
+
+# Wait for end of installation (allowing 5 hours)
+set timeout 18000
+expect {
+  timeout {exit 1}
+  "Started YaST2 Second Stage" {}
+  "Restarting system"
+}
+# Hack for tumbleweed: (bsc#995299)
+# "In /etc/fstab, there is a mount point for the directory" {send "\r"; exp_continue}
+
+# Let first reboot and initialization happen and log in
+set timeout 3000
+send ""
+expect {
+  timeout {exit 1}
+  "login:"
+}
+send "root\r"
+expect {
+  timeout {exit 1}
+  "Password:"
+}
+send "opensuse\r"
+
+# Shutdown the system cleanly
+expect {
+  timeout {exit 1}
+  "~ #"
+}
+send "init 0\r"
+expect {
+  timeout {exit 1}
+  "System halted" {}
+  "Reached target Shutdown"
+}
+send "\x1D"

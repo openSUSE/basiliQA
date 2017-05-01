@@ -1,0 +1,47 @@
+# keypresses-s390x.exp
+# simulate keyboard interaction during installation
+# architecture s390x - stage 1 (before reboot)
+
+# Copyright (C) 2015,2016 SUSE LLC
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 2.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Wait for VM to start
+sleep 5
+
+# Connect to VM
+spawn virsh console basebox-iso2qcow2
+expect {
+  timeout {exit 1}
+  "Escape character is"
+}
+sleep 2
+send "\r"
+
+# Select display type (option 4)
+set timeout 180
+expect {
+  timeout {exit 1}
+  "ASCII Console"
+}
+send "4\r"
+
+# Wait for end of installation (allowing 40 minutes)
+set timeout 2400
+expect {
+  timeout {exit 1}
+  "Started YaST2 Second Stage" {}
+  "Restarting system"
+}
+

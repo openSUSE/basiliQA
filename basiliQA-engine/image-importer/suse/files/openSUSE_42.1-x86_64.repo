@@ -1,0 +1,8 @@
+[openSUSE-Leap-42.1-0]
+name=openSUSE-Leap-42.1-0
+enabled=1
+autorefresh=0
+baseurl=http://dist.suse.de/install/SLP/openSUSE-Leap-42.1-GM/x86_64/DVD1/
+path=/
+type=yast2
+keeppackages=0

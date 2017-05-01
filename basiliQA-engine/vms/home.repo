@@ -1,0 +1,10 @@
+[Home_project]
+name=Home_project
+enabled=1
+autorefresh=0
+keeppackages=0
+priority=50
+baseurl=http://download.suse.de
+path=/
+type=rpm-md
+gpgcheck=0

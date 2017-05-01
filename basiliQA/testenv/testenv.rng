@@ -1,0 +1,61 @@
+element testenv
+{
+  attribute name { text },
+  attribute context { text },
+  attribute parameters { text },
+  attribute workspace { text },
+  attribute report { text },
+
+  # tests in cloud only
+  element cloud
+  {
+    attribute auth-url { text },
+    attribute project-name { text },
+    attribute project-id { text },
+    attribute username { text },
+    attribute password { text },
+    attribute model { text },
+    attribute sec-group { text }
+  }?,
+
+  # tests in vms only
+  element vms
+  {
+    attribute virsh-uri { text },
+    attribute model { text }
+  }?,
+
+  # tests on bare metal go here
+
+  element network
+  {
+    attribute name { text },
+    attribute subnet { text },
+    attribute subnet6 { text },
+    attribute gateway { text }
+  }+,
+
+  element node
+  {
+    attribute name { text },
+    attribute target { text },
+    attribute internal-ip { text },
+    attribute external-ip { text },
+    attribute ip6 {text},
+
+    element interface
+    {
+      attribute name { text },
+      attribute internal-ip { text },
+      attribute external-ip { text },
+      attribute ip6 {text},
+      attribute network { text }
+    }+
+
+    element disk
+    {
+      attribute name { text },
+      attribute size { text }
+    }+
+  }+
+}

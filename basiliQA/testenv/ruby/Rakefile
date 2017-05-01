@@ -1,0 +1,4 @@
+require 'rake/extensiontask'
+
+spec = Gem::Specification.load('testenv.gemspec')
+Rake::ExtensionTask.new('testenv', spec)

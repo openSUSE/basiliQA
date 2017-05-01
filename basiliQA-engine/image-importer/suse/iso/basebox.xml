@@ -1,0 +1,153 @@
+
+<domain type='...'>
+  <name>basebox-iso2qcow2</name>
+  <uuid>1a31ea64-b32e-45c3-5d94-89a0df4d88d2</uuid>
+  <memory unit='KiB'>1048576</memory>
+  <currentMemory unit='KiB'>1048576</currentMemory>
+  <vcpu placement='static'>1</vcpu>
+  <os>
+    <type ifarch='x86_64' arch='x86_64' machine='pc'>hvm</type>
+    <type ifarch='i586' arch='i686' machine='pc'>hvm</type>
+    <type ifarch='ppc64le' arch='ppc64le' machine='pseries'>hvm</type>
+    <type ifarch='ppc64be' arch='ppc64' machine='pseries'>hvm</type>
+    <type ifarch='aarch64' arch='aarch64' machine='virt-2.6'>hvm</type>
+    <type ifarch='s390x' arch='s390x' machine='s390-ccw-virtio'>hvm</type>
+    <loader ifarch='aarch64' readonly='yes' type='pflash'>/usr/share/qemu/aavmf-aarch64-code.bin</loader>
+    <nvram ifarch='aarch64' template='/usr/share/qemu/aavmf-aarch64-vars.bin'>...</nvram>
+    <kernel ifarch='s390x'>...</kernel>
+    <initrd ifarch='s390x'>...</initrd>
+    <cmdline ifarch='s390x'>ifcfg=eth0=dhcp autoyast=device://vdb/autoinst.xml install=CD</cmdline>
+  </os>
+  <cpu ifarch='x86_64' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='x86_64' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>phenom</model>
+  </cpu>
+  <cpu ifarch='i586' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='i586' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>core2duo</model>
+  </cpu>
+  <cpu ifarch='ppc64le' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='ppc64le' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>POWER8</model>
+  </cpu>
+  <cpu ifarch='ppc64be' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='ppc64be' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>POWER7</model>
+  </cpu>
+  <cpu ifarch='aarch64' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='aarch64' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>cortex-a57</model>
+  </cpu>
+  <cpu ifarch='s390x' ifemu='no' mode='host-model' match='exact' />
+  <cpu ifarch='s390x' ifemu='yes' mode='custom' match='exact'>
+    <model fallback='allow'>host</model>
+  </cpu>
+  <features>
+    <gic ifarch='aarch64' version='2'/>
+    <acpi />
+  </features>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <pm ifarch='x86_64,i586'>
+    <suspend-to-mem enabled='no'/>
+    <suspend-to-disk enabled='no'/>
+  </pm>
+  <devices>
+    <emulator ifarch='x86_64'>/usr/bin/qemu-system-x86_64</emulator>
+    <emulator ifarch='i586'>/usr/bin/qemu-system-i386</emulator>
+    <emulator ifarch='ppc64le,ppc64be'>/usr/bin/qemu-system-ppc64</emulator>
+    <emulator ifarch='aarch64'>/usr/bin/qemu-system-aarch64</emulator>
+    <emulator ifarch='s390x'>/usr/bin/qemu-system-s390x</emulator>
+    <controller ifarch='x86_64,i586,ppc64le,ppc64be' type='pci' index='0' model='pci-root'/>
+    <controller ifarch='aarch64' type='pci' index='0' model='pcie-root'/>
+    <controller ifarch='x86_64,i586' type='usb' index='0' model='ich9-ehci1'/>
+    <controller ifarch='ppc64le,ppc64be' type='usb' index='0' model='pci-ohci'/>
+    <controller ifarch='x86_64,i586' type='ide' index='0'/>
+    <controller ifarch='x86_64,i586,ppc64le,ppc64be' type='scsi' index='0'/>
+    <controller ifarch='aarch64,s390x' type='scsi' index='0' model='virtio-scsi'>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </controller>
+    <controller type='virtio-serial' index='0'>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </controller>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='...'/>
+      <target ifarch='x86_64,i586,s390x' dev='vda' bus='virtio'/>
+      <target ifarch='ppc64le,ppc64be,aarch64' dev='sda' bus='scsi'/>
+      <boot order='1'/>
+      <address ifarch='s390x' type='ccw'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='...'/>
+      <target ifarch='x86_64,i586' dev='hdb' bus='ide'/>
+      <target ifarch='ppc64le,ppc64be,aarch64,s390x' dev='sdb' bus='scsi'/>
+      <readonly/>
+      <boot order='2'/>
+    </disk>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='raw'/>
+      <source file='...'/>
+      <target ifarch='x86_64,i586,s390x' dev='vdb' bus='virtio'/>
+      <target ifarch='ppc64le,ppc64be,aarch64' dev='vda' bus='virtio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </disk>
+    <interface type='network'>
+      <mac address='52:54:00:5b:82:93'/>
+      <source network='fixed'/>
+      <model ifarch='x86_64,i586,ppc64le,ppc64be' type='e1000'/>
+      <model ifarch='aarch64,s390x' type='virtio'/>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:00:5b:82:94'/>
+      <source network='fixed'/>
+      <model ifarch='x86_64,i586,ppc64le,ppc64be' type='e1000'/>
+      <model ifarch='aarch64,s390x' type='virtio'/>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:00:5b:82:95'/>
+      <source network='fixed'/>
+      <model ifarch='x86_64,i586,ppc64le,ppc64be' type='e1000'/>
+      <model ifarch='aarch64,s390x' type='virtio'/>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </interface>
+    <interface type='network'>
+      <mac address='52:54:00:5b:82:96'/>
+      <source network='fixed'/>
+      <model ifarch='x86_64,i586,ppc64le,ppc64be' type='e1000'/>
+      <model ifarch='aarch64,s390x' type='virtio'/>
+      <address ifarch='aarch64' type='virtio-mmio'/>
+      <address ifarch='s390x' type='ccw'/>
+    </interface>
+    <serial ifarch='x86_64,i586,ppc64le,ppc64be,aarch64' type='pty'>
+      <target port='0'/>
+    </serial>
+    <console type='pty'>
+      <target ifarch='x86_64,i586,ppc64le,ppc64be,aarch64' type='serial' port='0'/>
+      <target ifarch='s390x' type='sclp' port='0'/>
+    </console>
+    <input ifarch='x86_64,i586' type='mouse' bus='ps2'/>
+    <input ifarch='x86_64,i586' type='keyboard' bus='ps2'/>
+    <sound ifarch='x86_64,i586,ppc64le,ppc64be' model='ich6'/>
+    <video ifarch='x86_64,i586'>
+      <model type='cirrus' vram='16384' heads='1'/>
+    </video>
+    <memballoon model='virtio'>
+      <address ifarch='s390x' type='ccw'/>
+    </memballoon>
+    <rng model='virtio'>
+      <backend model='random'>/dev/random</backend>
+      <address ifarch='s390x' type='ccw'/>
+    </rng>
+  </devices>
+</domain>
