@@ -888,7 +888,7 @@ function boot-test-machine
     dev="vd${letter}"
     eval "disk$i=\"--stringparam file$i \${file} --stringparam dev$i \${dev}\""
     rm -f "$file"
-    qemu-img create -f qcow2 "${file}" "${disk_list[$i]}G" > /dev/null
+    qemu-img create -f qcow2 "${file}" "${disk_list[$i]}" > /dev/null
     if [ $? -ne 0 ]; then
       echo "Error creating disk image" >&2
       exit 32

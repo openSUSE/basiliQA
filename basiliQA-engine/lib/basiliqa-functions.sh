@@ -416,15 +416,17 @@ function parse-nodes-file
 ##############################################################
 function set-test-environment
 {
-  echo "<testenv name=\"${PROJECT_NAME}\" context=\"${EXECUTION_CONTEXT}\" parameters=\"${TEST_PARAMETERS}\" workspace=\"${WORKSPACE}\" report=\"${WORKSPACE}/junit-results.xml\">" > $WORKSPACE/testenv.xml
-  echo "" >> $WORKSPACE/testenv.xml
+  local testenv="${WORKSPACE}/testenv-${RUN_NAME}.xml"
+
+  echo "<testenv name=\"${PROJECT_NAME}\" context=\"${EXECUTION_CONTEXT}\" parameters=\"${TEST_PARAMETERS}\" workspace=\"${WORKSPACE}\" report=\"${WORKSPACE}/junit-results.xml\">" > "$testenv"
+  echo "" >> "$testenv"
   if [ -n "$OS_AUTH_URL" ]; then
-    echo "  <cloud auth-url=\"$OS_AUTH_URL\" project-name=\"$OS_PROJECT_NAME\" username=\"$OS_USERNAME\" model=\"$VM_MODEL\" />" >> $WORKSPACE/testenv.xml
+    echo "  <cloud auth-url=\"$OS_AUTH_URL\" project-name=\"$OS_PROJECT_NAME\" username=\"$OS_USERNAME\" model=\"$VM_MODEL\" />" >> "$testenv"
   fi
   if [ -n "$VIRSH_DEFAULT_CONNECT_URI" ]; then
-    echo "  <vms virsh-uri=\"$VIRSH_DEFAULT_CONNECT_URI\" model=\"$VM_MODEL\" />" >> $WORKSPACE/testenv.xml
+    echo "  <vms virsh-uri=\"$VIRSH_DEFAULT_CONNECT_URI\" model=\"$VM_MODEL\" />" >> "$testenv"
   fi
-  echo "" >> $WORKSPACE/testenv.xml
+  echo "" >> "$testenv"
 
   # These variables are already defined elsewhere, but we inform nonetheless
   if [ -n "$EXECUTION_CONTEXT" ]; then
@@ -727,6 +729,7 @@ function upgrade-rpms
 function set-network-environment
 {
   local network_name="$1"
+  local testenv="${WORKSPACE}/testenv-${RUN_NAME}.xml"
 
   local network
   local subnet subnet6 gateway
@@ -737,14 +740,15 @@ function set-network-environment
   eval "gateway=\"\$GATEWAY_IP_${network}\""
 
   # Add declaration for network to test environment file
-  echo "  <network name=\"${network_name}\" subnet=\"${subnet}\" subnet6=\"${subnet6}\" gateway=\"${gateway}\" />" >> $WORKSPACE/testenv.xml
-  echo >> $WORKSPACE/testenv.xml
+  echo "  <network name=\"${network_name}\" subnet=\"${subnet}\" subnet6=\"${subnet6}\" gateway=\"${gateway}\" />" >> "$testenv"
+  echo >> "$testenv"
 }
 
 ##############################################################
 function set-node-environment
 {
   local node_name="$1"
+  local testenv="${WORKSPACE}/testenv-${RUN_NAME}.xml"
 
   local node
   local n d i
@@ -757,7 +761,7 @@ function set-node-environment
   eval "internal_ip=\"\$INTERNAL_IP_${node}\""
   eval "external_ip=\"\$EXTERNAL_IP_${node}\""
   eval "ip6=\"\$IP6_${node}\""
-  echo "  <node name=\"${node_name}\" target=\"${TARGET}\" internal-ip=\"${internal_ip}\" external-ip=\"${external_ip}\" ip6=\"${ip6}\">" >> $WORKSPACE/testenv.xml
+  echo "  <node name=\"${node_name}\" target=\"${TARGET}\" internal-ip=\"${internal_ip}\" external-ip=\"${external_ip}\" ip6=\"${ip6}\">" >> "$testenv"
 
   # Add declarations for network interface cards to test environment file
   eval "n=\"\$INTERFACES_${node}\""
@@ -766,7 +770,7 @@ function set-node-environment
     eval "external_ip=\"\$EXTERNAL_IP_${node}_ETH${i}\""
     eval "ip6=\"\$IP6_${node}_ETH${i}\""
     eval "network=\"\$NETWORK_${node}_ETH${i}\""
-    echo "    <interface name=\"eth${i}\" internal-ip=\"${internal_ip}\" external-ip=\"${external_ip}\" ip6=\"${ip6}\" network=\"${network}\" />" >> $WORKSPACE/testenv.xml
+    echo "    <interface name=\"eth${i}\" internal-ip=\"${internal_ip}\" external-ip=\"${external_ip}\" ip6=\"${ip6}\" network=\"${network}\" />" >> "$testenv"
   done
 
   # Add declarations for disks to test environment file
@@ -774,24 +778,25 @@ function set-node-environment
   for ((i = 0; i < $d; i++)); do
     eval "disk_name=\"\$DISK_NAME_${node}_DISK${i}\""
     eval "disk_size=\"\$DISK_SIZE_${node}_DISK${i}\""
-    echo "    <disk name=\"${disk_name}\" size=\"${disk_size}\" />" >> $WORKSPACE/testenv.xml
+    echo "    <disk name=\"${disk_name}\" size=\"${disk_size}\" />" >> "$testenv"
   done
-  echo "  </node>" >> $WORKSPACE/testenv.xml
-  echo >> $WORKSPACE/testenv.xml
+  echo "  </node>" >> "$testenv"
+  echo >> "$testenv"
 }
 
 ##############################################################
 function finish-test-environment
 {
+  local testenv="${WORKSPACE}/testenv-${RUN_NAME}.xml"
   local last
 
-  if [ -f "$WORKSPACE/testenv.xml" ]; then
-    last=$(tail -n -1 "$WORKSPACE/testenv.xml")
+  if [ -f "$testenv" ]; then
+    last=$(tail -n -1 "$testenv")
     if [ "$last" != "</testenv>" ]; then
-      echo "</testenv>" >> "$WORKSPACE/testenv.xml"
+      echo "</testenv>" >> "$testenv"
     fi
 
-    mv "$WORKSPACE/testenv.xml" "$WORKSPACE/testenv-${RUN_NAME}.xml"
+    ln -sf "testenv-${RUN_NAME}.xml" "${WORKSPACE}/testenv.xml"
   fi
 }
 

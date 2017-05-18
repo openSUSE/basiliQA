@@ -513,7 +513,7 @@ function create-disk
   local out
 
   DISK_NAME="${MACHINE_NAME}-${disk_dev}"
-  out=$(cinder create --display_name "${DISK_NAME}" "${disk_size}")
+  out=$(openstack volume create --size "${disk_size%G}" "${DISK_NAME}")
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 34
@@ -850,6 +850,7 @@ check-value "SEC_GROUP" "$SEC_GROUP"
 # empty $WORKSPACE is okay and means "computed value"
 
 export OS_USER_DOMAIN_NAME="Default"
+export OS_IDENTITY_API_VERSION="3"
 export OS_REGION_NAME="CustomRegion"
 export TARGET_TYPE="ssh"    # would be nice to support virtio in cloud
 
