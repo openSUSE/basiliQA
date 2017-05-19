@@ -790,7 +790,7 @@ function finish-test-environment
   local testenv="${WORKSPACE}/testenv-${RUN_NAME}.xml"
   local last
 
-  if [ -f "$testenv" ]; then
+  if [ -s "$testenv" ]; then
     last=$(tail -n -1 "$testenv")
     if [ "$last" != "</testenv>" ]; then
       echo "</testenv>" >> "$testenv"
