@@ -50,12 +50,12 @@ element testenv
       attribute external-ip { text },
       attribute ip6 {text},
       attribute network { text }
-    }+
+    }+,
 
     element disk
     {
       attribute name { text },
       attribute size { text }
-    }+
+    }*
   }+
 }
