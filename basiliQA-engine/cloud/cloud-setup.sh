@@ -3,7 +3,7 @@
 # cloud-setup.sh
 # Setup of cloud for basiliQA
 
-# Copyright (C) 2015,2016 SUSE LLC
+# Copyright (C) 2015,2016,2017 SUSE LLC
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,34 +48,30 @@ ssh -oStrictHostKeyChecking=no root@$name "$SCRIPT"
 source cloud-rc.sh $name
 
 # Create new flavors
-nova flavor-create m1.smaller 6 1024 18 1
-nova flavor-create m1.ltp 7 2048 20 2
+openstack flavor create --id 6 --ram 1024 --disk 18 --vcpus 1 m1.smaller
+openstack flavor create --id 7 --ram 2048 --disk 20 --vcpus 2 m1.ltp
 openstack flavor set --property hw_rng:allowed=True m1.smaller
 openstack flavor set --property hw_rng:allowed=True m1.ltp
 
-# Add DNS
-neutron subnet-update --dns-nameserver 10.160.0.1 fixed
-
 # Create security rules
-neutron security-group-rule-create default --ethertype IPv4 --protocol icmp --remote-ip-prefix 0.0.0.0/0
-neutron security-group-rule-create default --ethertype IPv4 --protocol tcp --remote-ip-prefix 0.0.0.0/0
-neutron security-group-rule-create default --ethertype IPv4 --protocol udp --remote-ip-prefix 0.0.0.0/0
-neutron security-group-rule-create default --ethertype IPv6 --protocol icmpv6 --remote-ip-prefix ::/0
-neutron security-group-rule-create default --ethertype IPv6 --protocol tcp --remote-ip-prefix ::/0
-neutron security-group-rule-create default --ethertype IPv6 --protocol udp --remote-ip-prefix ::/0
-neutron security-group-list
+openstack security group rule create --ethertype IPv4 --protocol icmp --remote-ip 0.0.0.0/0 default
+openstack security group rule create --ethertype IPv4 --protocol tcp --remote-ip 0.0.0.0/0 default
+openstack security group rule create --ethertype IPv4 --protocol udp --remote-ip 0.0.0.0/0 default
+openstack security group rule create --ethertype IPv6 --protocol icmpv6 --remote-ip ::/0 default
+openstack security group rule create --ethertype IPv6 --protocol tcp --remote-ip ::/0 default
+openstack security group rule create --ethertype IPv6 --protocol udp --remote-ip ::/0 default
+openstack security group show default
 
 # Setup quotas
-nova quota-class-update --instances $INSTANCES_QUOTA       default
-nova quota-class-update --ram       $(($RAM_QUOTA * 1024)) default
-nova quota-class-update --cores     $VCPU_QUOTA            default
-nova quota-show
-neutron quota-update --floatingip   $FLOATINGIP_QUOTA
-neutron quota-update --port         $PORT_QUOTA
+openstack quota set --instances    $INSTANCES_QUOTA
+openstack quota set --ram          $(($RAM_QUOTA * 1024))
+openstack quota set --cores        $VCPU_QUOTA
+openstack quota set --floating-ips $FLOATINGIP_QUOTA
+openstack quota set --ports        $PORT_QUOTA
+openstack quota show
 
 # Create floating IPs
 for ((i = 0; i < $FLOATINGIP_QUOTA; i++)); do
-  nova floating-ip-create >/dev/null
+  openstack floating ip create floating >/dev/null
 done
-nova floating-ip-list
-
+openstack floating ip list

@@ -3,7 +3,7 @@
 # cloud-rc.sh
 # Set up environment for basiliQA cloud
 
-# Copyright (C) 2015,2016 SUSE LLC
+# Copyright (C) 2015,2016,2017 SUSE LLC
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,4 +32,5 @@ export OS_USERNAME="basiliqa"
 export OS_PASSWORD="opensuse"
 
 export OS_USER_DOMAIN_NAME='Default'
+export OS_IDENTITY_API_VERSION="3"
 export OS_REGION_NAME='CustomRegion'
