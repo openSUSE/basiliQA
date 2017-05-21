@@ -64,13 +64,13 @@ source $(dirname "$0")/../lib/basiliqa-functions.sh
 function delete-previous-instance
 {
   local timeout
-  local machine_list machine_id machine_status machine_state
+  local machine_list machine_id machine_status
   local floating_list floating_ip
   local i
 
   timeout=60
 
-  machine_list=$(nova list)
+  machine_list=$(openstack server list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 20
@@ -80,31 +80,30 @@ function delete-previous-instance
     echo "No previous instance to delete"
   else
     machine_status=$(echo "$machine_list" | grep -m 1 " ${MACHINE_NAME} " | tr -s ' ' | cut -d' ' -f6)
-    machine_state=$(echo "$machine_list" | grep -m 1 " ${MACHINE_NAME} " | tr -s ' ' | cut -d' ' -f8)
-    if [ "$machine_state" = "deleting" -o "$machine_status" = "DELETED" ]; then
+    if [ "$machine_status" = "DELETED" ]; then
       echo "Instance ${MACHINE_NAME} with ID ${machine_id} is already being deleted"
     else
       echo "Instance ${MACHINE_NAME} with ID ${machine_id} already exists, deleting it"
-      floating_list=$(nova show "${machine_id}" | grep " network.*, " | sed 's/^.*, //; s/ *|$//')
+      floating_list=$(openstack server show "${machine_id}" | grep " addresses " | sed 's/^.*, //; s/ *|$//')
       if [ $? -ne 0 ]; then
         echo "Openstack error" >&2
         exit 20
       fi
       for floating_ip in $floating_list; do
-        nova floating-ip-disassociate "${machine_id}" "${floating_ip}"
+        openstack server remove floating ip "${machine_id}" "${floating_ip}"
         if [ $? -ne 0 ]; then
           echo "Openstack error" >&2
           exit 20
         fi
       done
-      nova delete "$machine_id"
+      openstack server delete "$machine_id"
       if [ $? -ne 0 ]; then
         echo "Openstack error" >&2
         exit 20
       fi
     fi
     for ((i = 0; i < $timeout; i++)); do
-      machine_list=$(nova list)
+      machine_list=$(openstack server list)
       if [ $? -ne 0 ]; then
         echo "Openstack error" >&2
         exit 20
@@ -126,7 +125,7 @@ function delete-previous-router
 {
   local router_list router_id
 
-  router_list=$(neutron router-list)
+  router_list=$(openstack router list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 21
@@ -136,17 +135,16 @@ function delete-previous-router
     echo "No previous router to delete"
   else
     echo "Router ${NETWORK_NAME} with ID ${router_id} already exists, deleting it"
-    neutron router-gateway-clear "$router_id"
+    openstack router unset --external-gateway "${router_id}"
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 21
     fi
-    neutron router-interface-delete "$router_id" "${NETWORK_NAME}-ipv4"
-    neutron router-interface-delete "$router_id" "${NETWORK_NAME}-ipv6"
-    # We just ignore the error codes, because the interfaces might not exist
-    # TODO: find a way to know whether the router really has these interfaces before trying to delete them
-    #       tried with "router-port-list", but its output is hard to parse
-    neutron router-delete "$router_id"
+    openstack router remove subnet "${router_id}" "${NETWORK_NAME}-ipv4"
+    openstack router remove subnet "${router_id}" "${NETWORK_NAME}-ipv6"
+    # We just ignore the error codes, because the subnets might not exist
+    # TODO: find a way to know whether the router really has these subnets before trying to delete them
+    openstack router delete "${router_id}"
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 21
@@ -160,7 +158,7 @@ function delete-previous-network
 {
   local network_list network_id
 
-  network_list=$(neutron net-list)
+  network_list=$(openstack network list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 22
@@ -170,8 +168,8 @@ function delete-previous-network
     echo "No previous network to delete"
   else
     echo "Network ${NETWORK_NAME} with ID ${network_id} already exists, deleting it"
-    # we don't delete its subnet first, but apparently that's okay
-    neutron net-delete "$network_id"
+    # we don't delete its subnets first, but apparently that's okay
+    openstack network delete "$network_id"
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 22
@@ -183,7 +181,7 @@ function delete-previous-network
 ##############################################################
 function create-network
 {
-  neutron net-create --shared "$NETWORK_NAME" > /dev/null
+  openstack network create --share "$NETWORK_NAME" > /dev/null
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 23
@@ -196,7 +194,7 @@ function get-fixed-characteristics
 {
   local subnet_show
 
-  subnet_show=$(neutron subnet-show "fixed")
+  subnet_show=$(openstack subnet show "fixed")
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 24
@@ -217,9 +215,9 @@ function create-subnet
   # TODO: we could let the user define the DHCP pool directly
   #       with --allocation-pool start=IP_ADDR,end=IP_ADDR
   if [ "$dhcp" = "yes" ]; then
-    option_dhcp="--enable-dhcp"
+    option_dhcp="--dhcp"
   else
-    option_dhcp="--disable-dhcp"
+    option_dhcp="--no-dhcp"
   fi
   # TODO: we could let the user define the gateway address directly
   #       with --gateway GATEWAY_IP
@@ -230,18 +228,14 @@ function create-subnet
   fi
   subnet_name="${NETWORK_NAME}-ipv4"
   # TODO: we could let the user create more than one subnet per network
-  neutron subnet-create \
-          --name "$subnet_name" \
+  subnet_show=$(openstack subnet create \
           $option_dhcp \
           $option_gateway \
-          "$NETWORK_NAME" "$subnet" > /dev/null
+          --subnet-range "$subnet" \
+          --network "$NETWORK_NAME" \
+          "$subnet_name")
   if [ $? -ne 0 ]; then
     echo "Impossible to create subnet \"$subnet_name\"" >&2
-    exit 25
-  fi
-  subnet_show=$(neutron subnet-show "$subnet_name")
-  if [ $? -ne 0 ]; then
-    echo "Openstack error" >&2
     exit 25
   fi
   SUBNET_ID=$(echo "$subnet_show" | grep -m 1 " id " | tr -s ' ' | cut -d' ' -f4)
@@ -265,20 +259,15 @@ function create-subnet6
   #       for now we provide only a bare subnet
   subnet6_name="${NETWORK_NAME}-ipv6"
   # TODO: we could let the user create more than one subnet6 per network
-
-  neutron subnet-create \
-          --name "$subnet6_name" \
+  subnet6_show=$(openstack subnet create \
           --ip-version 6 \
           --ipv6-ra-mode slaac \
           --ipv6-address-mode slaac \
-          "$NETWORK_NAME" "$subnet6" > /dev/null
+          --subnet-range "$subnet6" \
+          --network "$NETWORK_NAME" \
+          "$subnet6_name")
   if [ $? -ne 0 ]; then
     echo "Impossible to create subnet \"$subnet6_name\"" >&2
-    exit 26
-  fi
-  subnet6_show=$(neutron subnet-show "$subnet6_name")
-  if [ $? -ne 0 ]; then
-    echo "Openstack error" >&2
     exit 26
   fi
   SUBNET6_ID=$(echo "$subnet6_show" | grep -m 1 " id " | tr -s ' ' | cut -d' ' -f4)
@@ -292,31 +281,26 @@ function create-subnet6
 ##############################################################
 function create-router
 {
-  local router_list
+  local router_show
 
-  neutron router-create "$NETWORK_NAME" > /dev/null
+  router_show=$(openstack router create "$NETWORK_NAME")
   if [ $? -ne 0 ]; then
     echo "Impossible to create router \"$NETWORK_NAME\"" >&2
     exit 27
   fi
-  router_list=$(neutron router-list)
-  if [ $? -ne 0 ]; then
-    echo "Openstack error" >&2
-    exit 27
-  fi
-  ROUTER_ID=$(echo "$router_list" | grep -m 1 " ${NETWORK_NAME} " | tr -s ' ' | cut -d' ' -f2)
+  ROUTER_ID=$(echo "$router_show" | grep -m 1 " id " | tr -s ' ' | cut -d' ' -f4)
   if [ "$ROUTER_ID" == "" ]; then
     echo "Router \"$NETWORK_NAME\" not found" >&2
     exit 27
   fi
-  neutron router-gateway-set "$ROUTER_ID" floating
-  if [ $? -ne 0 ]; then
-    echo "Impossible to create internal interface for router \"$NETWORK_NAME\"" >&2
-    exit 27
-  fi
-  neutron router-interface-add "$ROUTER_ID" "$SUBNET_ID"
+  openstack router set --external-gateway floating "$ROUTER_ID"
   if [ $? -ne 0 ]; then
     echo "Impossible to create external interface for router \"$NETWORK_NAME\"" >&2
+    exit 27
+  fi
+  openstack router add subnet "$ROUTER_ID" "$SUBNET_ID"
+  if [ $? -ne 0 ]; then
+    echo "Impossible to create internal interface for router \"$NETWORK_NAME\"" >&2
     exit 27
   fi
   echo "Router \"$NETWORK_NAME\" created" >&2
@@ -338,7 +322,7 @@ function is-image-outdated
   echo "Image file was last modified on $(date --date "$last_modified")"
   last_modified=$(date --date "$last_modified" +%s)
 
-  property_list=$(glance image-show "$IMAGE_ID")
+  property_list=$(openstack image show "$IMAGE_ID")
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 28
@@ -357,7 +341,7 @@ function is-image-outdated
 ##############################################################
 function delete-image
 {
-  glance image-delete "$IMAGE_ID"
+  openstack image delete "$IMAGE_ID"
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 29
@@ -390,24 +374,24 @@ function download-image
     exit 30
   fi
 
-  glance image-create \
+  openstack image create \
            --file "${image_tmp}" \
            --disk-format qcow2 \
            --container-format bare \
            --property is-public="true" \
            --property hw_rng_model="virtio" \
            --property architecture="${image_arch}" \
-           --name "${image_name}" > /dev/null
+           "${image_name}" > /dev/null
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
-    # Remove image if glance failed
+    # Remove image if openstack failed
     rm "${image_tmp}" > /dev/null 2>&1
     exit 30
   fi
 
   rm "${image_tmp}" > /dev/null 2>&1
   if [ $? -ne 0 ]; then
-    echo "Removing of ${image_tmp} failed" >&2
+    echo "Removal of ${image_tmp} failed" >&2
     exit 30
   fi
 }
@@ -423,12 +407,12 @@ function wait-for-image
   timeout=180
 
   for ((i = 0; i < $timeout; i++)); do
-    image_list=$(glance --verbose image-list)
+    image_list=$(openstack image list)
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 31
     fi
-    IMAGE_ID=$(echo "$image_list" | grep -m 1 " ${image_name} " | grep "active" | tr -s ' ' | cut -d' ' -f2)
+    IMAGE_ID=$(echo "$image_list" | grep -m 1 " ${image_name} " | grep " active " | tr -s ' ' | cut -d' ' -f2)
     [ "$IMAGE_ID" = "" ] || break
     sleep 1
   done
@@ -452,7 +436,7 @@ function get-image
   image_url="${IMAGE_SOURCE}/${system_and_version}-${architecture}-${variant}.qcow2"
 
   image_name="${system_and_version}-${architecture}-${variant}"
-  image_list=$(glance --verbose image-list)
+  image_list=$(openstack image list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 32
@@ -463,7 +447,7 @@ function get-image
     download-image "$image_name" "$image_url" "$architecture"
     wait-for-image "$image_name"
   else
-    image_state=$(echo "$image_list" | grep -m 1 " ${image_name} " | tr -s ' ' | cut -d' ' -f12)
+    image_state=$(echo "$image_list" | grep -m 1 " ${image_name} " | tr -s ' ' | cut -d' ' -f6)
     if [ "$image_state" = "saving" ]; then
       echo "Image $image_name with ID $IMAGE_ID is already being downloaded"
       wait-for-image "$image_name"
@@ -492,7 +476,7 @@ function get-network-id
   else
     NETWORK_NAME="${PROJECT_AND_CONTEXT}-${network_name}"
   fi
-  network_list=$(neutron net-list)
+  network_list=$(openstack network list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 33
@@ -564,9 +548,9 @@ function boot-test-machine
     eval "disk$i=\"--block-device-mapping ${dev}=${DISK_ID}:::1\""
   done
 
-  nova boot \
-       --flavor "$model" \
+  openstack server create \
        --image "$IMAGE_ID" \
+       --flavor "$model" \
        $nic0 $nic1 $nic2 $nic3 $nic4 $nic5 $nic6 $nic7 \
        $disk0 $disk1 $disk2 $disk3 $disk4 $disk5 $disk6 $disk7 \
        "$MACHINE_NAME" > /dev/null
@@ -575,7 +559,7 @@ function boot-test-machine
     exit 35
   fi
   for ((i = 0; i < $timeout; i++)); do
-    machine_list=$(nova list)
+    machine_list=$(openstack server list)
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 35
@@ -588,7 +572,7 @@ function boot-test-machine
     echo "Timeout" >&2
     exit 35
   fi
-  machine_list=$(nova list)
+  machine_list=$(openstack server list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 35
@@ -609,7 +593,7 @@ function get-fixed-ips
   local address
 
   # Get list of addresses associated to this network
-  machine_list=$(nova list)
+  machine_list=$(openstack server list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 36
@@ -656,18 +640,18 @@ function associate-floating-ip
 
   timeout=60
 
-  floating_list=$(neutron floatingip-list)
+  floating_list=$(openstack floating ip list)
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 37
   fi
-  FLOATING_IP=$(echo "$floating_list" | grep -m 1 '|  * |' | tr -s ' ' | cut -d' ' -f7)
+  FLOATING_IP=$(echo "$floating_list" | grep -m 1 ' None ' | tr -s ' ' | cut -d' ' -f4)
   if [ "$FLOATING_IP" = "" ]; then
     echo "No IP address available" >&2
     exit 37
   fi
-  nova floating-ip-associate \
-       --fixed-address "${FIXED_IP}" \
+  openstack server add floating ip \
+       --fixed-ip-address "${FIXED_IP}" \
        "${MACHINE_ID}" \
        "${FLOATING_IP}"
   if [ $? -ne 0 ]; then
@@ -675,16 +659,16 @@ function associate-floating-ip
     exit 37
   fi
   for ((i = 0; i < $timeout; i++)); do
-    floating_list=$(neutron floatingip-list)
+    floating_list=$(openstack floating ip list)
     if [ $? -ne 0 ]; then
       echo "Openstack error" >&2
       exit 37
     fi
-    port_id=$(echo "$floating_list" | grep -m 1 " ${FLOATING_IP} " | tr -s ' ' | cut -d' ' -f10)
-    [ "$port_id" = "" ] || break
+    port_id=$(echo "$floating_list" | grep -m 1 " ${FLOATING_IP} " | tr -s ' ' | cut -d' ' -f8)
+    [ "$port_id" = "None" ] || break
     sleep 1
   done
-  if [ "$port_id" = "" ]; then
+  if [ "$port_id" = "None" ]; then
     echo "IP address ${FLOATING_IP} not associated" >&2
     exit 37
   fi
@@ -742,7 +726,7 @@ function initialize-disk
 ##############################################################
 function add-secgroup
 {
-  nova add-secgroup "$MACHINE_ID" "$SEC_GROUP"
+  openstack server add security group "$MACHINE_ID" "$SEC_GROUP"
   if [ $? -ne 0 ]; then
     echo "Openstack error" >&2
     exit 38
@@ -756,31 +740,31 @@ function drop-test-machine
   local machine_list machine_id
   local floating_list floating_ip
 
-  machine_list=$(nova list)
+  machine_list=$(openstack server list)
   # errors ignored
   machine_id=$(echo "$machine_list" | grep -m 1 " ${MACHINE_NAME} " | tr -s ' ' | cut -d' ' -f2)
   if [ "$machine_id" != "" ]; then
-    floating_list=$(nova show "${machine_id}" | grep " network.*, " | sed 's/^.*, //; s/ *|$//')
+    floating_list=$(openstack server show "${machine_id}" | grep " addresses " | sed 's/^.*, //; s/ *|$//')
     # errors ignored
     for floating_ip in $floating_list; do
-      nova floating-ip-disassociate "${machine_id}" "${floating_ip}"
+      openstack server remove floating ip "${machine_id}" "${floating_ip}"
       # errors ignored
     done
   fi
-  nova delete "$MACHINE_NAME"
+  openstack server delete "$MACHINE_NAME"
   # errors ignored
 }
 
 ##############################################################
 function drop-router
 {
-  neutron router-gateway-clear "$NETWORK_NAME"
+  openstack router unset --external-gateway "$NETWORK_NAME"
   # errors ignored
-  neutron router-interface-delete "$NETWORK_NAME" "${NETWORK_NAME}-ipv4"
+  openstack router remove subnet "$NETWORK_NAME" "${NETWORK_NAME}-ipv4"
   # errors ignored
-  neutron router-interface-delete "$NETWORK_NAME" "${NETWORK_NAME}-ipv6"
+  openstack router remove subnet "$NETWORK_NAME" "${NETWORK_NAME}-ipv6"
   # errors ignored
-  neutron router-delete "$NETWORK_NAME"
+  openstack router delete "$NETWORK_NAME"
   # errors ignored
 }
 
@@ -789,27 +773,27 @@ function drop-network
 {
   local subnet_id port_id
 
-  subnet_id=$(neutron subnet-show "${NETWORK_NAME}-ipv4" 2>/dev/null | grep " id " | tr -s ' ' | cut -d' ' -f4)
+  subnet_id=$(openstack subnet show "${NETWORK_NAME}-ipv4" 2>/dev/null | grep " id " | tr -s ' ' | cut -d' ' -f4)
   if [ "$subnet_id" != "" ]; then
-    for port_id in $(neutron port-list | grep " $subnet_id " | tr -s ' ' | cut -d' ' -f2); do
-      neutron port-delete $port_id
+    for port_id in $(openstack port list | grep " $subnet_id " | tr -s ' ' | cut -d' ' -f2); do
+      openstack port delete $port_id
       # errors ignored
     done
-    neutron subnet-delete "${NETWORK_NAME}-ipv4"
+    openstack subnet delete "${NETWORK_NAME}-ipv4"
     # errors ignored
   fi
 
-  subnet6_id=$(neutron subnet-show "${NETWORK_NAME}-ipv6" 2>/dev/null | grep " id " | tr -s ' ' | cut -d' ' -f4)
+  subnet6_id=$(openstack subnet show "${NETWORK_NAME}-ipv6" 2>/dev/null | grep " id " | tr -s ' ' | cut -d' ' -f4)
   if [ "$subnet6_id" != "" ]; then
-    for port_id in $(neutron port-list | grep " $subnet6_id " | tr -s ' ' | cut -d' ' -f2); do
-      neutron port-delete $port_id
+    for port_id in $(openstack port list | grep " $subnet6_id " | tr -s ' ' | cut -d' ' -f2); do
+      openstack port delete $port_id
       # errors ignored
     done
-    neutron subnet-delete "${NETWORK_NAME}-ipv6"
+    openstack subnet delete "${NETWORK_NAME}-ipv6"
     # errors ignored
   fi
 
-  neutron net-delete "$NETWORK_NAME"
+  openstack network delete "$NETWORK_NAME"
   # errors ignored
 }
 
