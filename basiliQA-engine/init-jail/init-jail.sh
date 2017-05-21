@@ -70,21 +70,21 @@ function create-jail
 
   # add optional repos
   if [ "$with_cucumber" = "yes" ]; then
-    sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA:/ruby/openSUSE_Leap_42.1/Devel:basiliQA:ruby.repo || exit 3
+    sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA:/ruby/openSUSE_Leap_42.2/Devel:basiliQA:ruby.repo || exit 3
   fi
 
   # add normal repos
-  sudo zypper --root $jail addrepo http://download.opensuse.org/distribution/leap/42.1/repo/oss/ repo-oss || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/distribution/leap/42.2/repo/oss/ repo-oss || exit 3
   sudo zypper --root $jail modifyrepo --priority 98 repo-oss || exit 3
-  sudo zypper --root $jail addrepo http://download.opensuse.org/distribution/leap/42.1/repo/non-oss/ repo-non-oss || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/distribution/leap/42.2/repo/non-oss/ repo-non-oss || exit 3
   sudo zypper --root $jail modifyrepo --priority 98 repo-non-oss || exit 3
-  sudo zypper --root $jail addrepo http://download.opensuse.org/update/leap/42.1/oss/openSUSE:Leap:42.1:Update.repo || exit 3
-  sudo zypper --root $jail modifyrepo --priority 97 openSUSE_Leap_42.1_Update || exit 3
-  sudo zypper --root $jail addrepo http://download.opensuse.org/update/leap/42.1/non-oss/openSUSE:Leap:42.1:NonFree:Update.repo || exit 3
-  sudo zypper --root $jail modifyrepo --priority 97 openSUSE_Leap_42.1_NonFree_Update || exit 3
-  sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA/openSUSE_Leap_42.1/basiliQA.repo || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/update/leap/42.2/oss/openSUSE:Leap:42.2:Update.repo || exit 3
+  sudo zypper --root $jail modifyrepo --priority 97 openSUSE_Leap_42.2_Update || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/update/leap/42.2/non-oss/openSUSE:Leap:42.2:NonFree:Update.repo || exit 3
+  sudo zypper --root $jail modifyrepo --priority 97 openSUSE_Leap_42.2_NonFree_Update || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA/openSUSE_Leap_42.2/basiliQA.repo || exit 3
   sudo zypper --root $jail modifyrepo --priority 96 basiliQA || exit 3
-  sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA:/testsuites/openSUSE_Leap_42.1/basiliQA:testsuites.repo || exit 3
+  sudo zypper --root $jail addrepo http://download.opensuse.org/basiliQA:/testsuites/openSUSE_Leap_42.2/basiliQA:testsuites.repo || exit 3
   sudo zypper --root $jail modifyrepo --priority 95 basiliQA_testsuites || exit 3
   if [ "$type" = "cloud" ]; then
     sudo zypper --root $jail addrepo -t yast2 http://download.opensuse.org/repositories/Cloud:/OpenStack:/Master/openSUSE_Leap_42.2/Cloud:OpenStack:Master.repo || exit 3
