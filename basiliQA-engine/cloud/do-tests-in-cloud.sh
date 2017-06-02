@@ -222,9 +222,9 @@ function create-subnet
   # TODO: we could let the user define the gateway address directly
   #       with --gateway GATEWAY_IP
   if [ "$gateway" = "yes" ]; then
-    option_gateway=
+    option_gateway="--gateway auto"
   else
-    option_gateway="--no-gateway"
+    option_gateway="--gateway none"
   fi
   subnet_name="${NETWORK_NAME}-ipv4"
   # TODO: we could let the user create more than one subnet per network
