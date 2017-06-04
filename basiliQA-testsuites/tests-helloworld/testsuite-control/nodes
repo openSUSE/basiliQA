@@ -1,0 +1,3 @@
+node          SUT
+repository    ${CHANNEL_BASILIQA_SUT}
+install       ${PROJECT_NAME}
