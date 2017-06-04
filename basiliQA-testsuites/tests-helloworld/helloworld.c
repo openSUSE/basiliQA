@@ -29,7 +29,7 @@ int main(int argc, const char *argv[])
       usage(argv[0]);
       exit(1);
     }
-  } 
+  }
 
   printf("Hello, World!\n");
   return 0;

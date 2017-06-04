@@ -3,7 +3,7 @@
 # init-jail.sh
 # Prepare container for testing locally with basiliqa
 
-# Copyright (C) 2015,2016 SUSE LLC
+# Copyright (C) 2015,2016,2017 The basiliQA developers
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ function create-jail
   # refresh packages list
   sudo zypper --root $jail --gpg-auto-import-keys refresh || exit 3
   sudo mkdir $jail/etc/products.d
-  sudo ln -s $jail/etc/products.d/SLES.prod $jail/etc/products.d/baseproduct
+  sudo ln -s $jail/etc/products.d/openSUSE.prod $jail/etc/products.d/baseproduct
 
   # install packages
   sudo zypper --root $jail --non-interactive install --auto-agree-with-licenses zypper || exit 3

@@ -2,7 +2,7 @@
 name=openSUSE-Tumbleweed
 enabled=1
 autorefresh=0
-baseurl=http://dist.suse.de/install/SLP/openSUSE-Tumbleweed/
+baseurl=http://download.opensuse.org/tumbleweed/repo/oss/
 path=/
 type=yast2
 keeppackages=0

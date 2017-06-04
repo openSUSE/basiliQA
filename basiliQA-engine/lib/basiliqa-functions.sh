@@ -64,6 +64,8 @@ function get-running-system
               ;;
         12.2) echo "SLE_12_SP2"
               ;;
+        12.3) echo "SLE_12_SP3"
+              ;;
         *) echo "Unknown SLE version $version_id" >&2
            exit 3
       esac
@@ -72,9 +74,11 @@ function get-running-system
       case "$version_id" in
         13.2) echo "openSUSE_13.2"
               ;;
-        42.1) echo "openSUSE_42.1"
+        42.1) echo "openSUSE_Leap_42.1"
               ;;
-        42.2) echo "openSUSE_42.2"
+        42.2) echo "openSUSE_Leap_42.2"
+              ;;
+        42.3) echo "openSUSE_Leap_42.3"
               ;;
         20*) echo "openSUSE_Tumbleweed"
              ;;
@@ -92,8 +96,11 @@ function install-control-rpm
 {
   local repo_file repo_url rpm_name
 
-  repo_file="/etc/zypp/repos.d/Devel_basiliQA_testsuites.repo"
-  repo_url="http://download.opensuse.org/repositories/basiliQA:/testsuites/${RUNNING_SYSTEM}/basiliQA:testsuites.repo"
+  # Temporary
+  repo_file="/etc/zypp/repos.d/home_ebischoff_basiliQA_testsuites.repo"
+  repo_url="http://download.opensuse.org/repositories/home:/ebischoff:/basiliQA:/testsuites/${RUNNING_SYSTEM}/home:ebischoff:basiliQA:testsuites.repo"
+  # repo_file="/etc/zypp/repos.d/basiliQA_testsuites.repo"
+  # repo_url="http://download.opensuse.org/repositories/basiliQA:/testsuites/${RUNNING_SYSTEM}/basiliQA:testsuites.repo"
 
   if [ ! -f "$repo_file" ]; then
     sudo-zypper --non-interactive addrepo "${repo_url}"
