@@ -84,9 +84,9 @@ function create-jail
   sudo zypper --root $jail modifyrepo --priority 97 openSUSE_Leap_42.2_NonFree_Update || exit 3
   # Temporary: the two repositories below will move ###
   sudo zypper --root $jail addrepo http://download.opensuse.org/repositories/home:/ebischoff:/basiliQA/openSUSE_Leap_42.2/home:ebischoff:basiliQA.repo || exit 3
-  sudo zypper --root $jail modifyrepo --priority 96 basiliQA || exit 3
+  sudo zypper --root $jail modifyrepo --priority 96 home_ebischoff_basiliQA || exit 3
   sudo zypper --root $jail addrepo http://download.opensuse.org/repositories/home:/ebischoff:/basiliQA:/testsuites/openSUSE_Leap_42.2/home:ebischoff:basiliQA:testsuites.repo || exit 3
-  sudo zypper --root $jail modifyrepo --priority 95 basiliQA_testsuites || exit 3
+  sudo zypper --root $jail modifyrepo --priority 95 home_ebischoff_basiliQA_testsuites || exit 3
   # End of temporary ##################################
   if [ "$type" = "cloud" ]; then
     sudo zypper --root $jail addrepo -t yast2 http://download.opensuse.org/repositories/Cloud:/OpenStack:/Master/openSUSE_Leap_42.2/Cloud:OpenStack:Master.repo || exit 3
