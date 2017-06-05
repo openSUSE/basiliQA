@@ -16,11 +16,13 @@ Creating your first test suite
 To create your first test suite, please install on your workstation
 the package basiliqa-authoring:
 
-  # zypper ar http://download.opensuse.org/repositories/basiliQA/openSUSE_Leap_42.2/basiliQA.repo
+  # zypper ar http://download.opensuse.org/repositories/home:/ebischoff:/basiliQA/openSUSE_Leap_42.2/home:ebischoff:basiliQA.repo
   # zypper ref
   # zypper in basiliqa-authoring
 
-(adapt the repository URL to the distribution you use).
+(adapt the repository URL to the distribution you use;
+ the above URL is temporary, it should move to
+ http://download.opensuse.org/repositories/basiliQA/openSUSE_Leap_42.2/basiliQA.repo)
 
 Go to some empty directory, and then type the following command:
 
