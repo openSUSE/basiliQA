@@ -30,7 +30,7 @@
 #   TEST_PARAMETERS            TEST_PRECISE,FAST
 #
 #   IMAGE_SOURCE               http://basiliqa.suse.de/images/
-#   IMAGE_NAME_<node>          openSUSE_42.1-x86_64-default  (for each node)
+#   IMAGE_NAME_<node>          openSUSE_42.3-x86_64-default  (for each node)
 #
 #   WORKSPACE_ROOT             /var/tmp/basiliqa/workspace
 #   IMAGE_DIR                  /var/tmp/basiliqa/images

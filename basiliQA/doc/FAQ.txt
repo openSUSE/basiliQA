@@ -222,7 +222,7 @@ DETAILED ANSWERS
        Please upgrade QEmu. For example, on Leap:
 
           # zypper ar http://download.opensuse.org/repositories/Virtualization/
-       openSUSE_Leap_42.1/Virtualization.repo
+       openSUSE_Leap_42.3/Virtualization.repo
           # zypper ref
           # zypper in qemu-ppc-2.5.0-319.1.x86_64
 

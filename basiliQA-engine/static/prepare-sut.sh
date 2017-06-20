@@ -20,7 +20,7 @@
 
 if [ $# -ne 2 ]; then
   echo "Syntax: $0 <ip-address-of-SUT> <system-family>" >&2
-  echo "Example: $0 1.2.3.4 SLE_12_SP1" >&2
+  echo "Example: $0 1.2.3.4 openSUSE_42.3" >&2
   exit 1
 fi
 host="$1"

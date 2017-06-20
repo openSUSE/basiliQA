@@ -1,0 +1,8 @@
+[openSUSE-Leap-42.3-0]
+name=openSUSE-Leap-42.3-0
+enabled=1
+autorefresh=0
+baseurl=http://download.opensuse.org/distribution/leap/42.3/repo/oss/
+path=/
+type=yast2
+keeppackages=0

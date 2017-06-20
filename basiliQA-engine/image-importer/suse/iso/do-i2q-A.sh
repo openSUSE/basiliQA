@@ -51,6 +51,9 @@ case "$FAMILY" in
   openSUSE_42.2)
       template=autoinst-opensuse-42.2.xml
       ;;
+  openSUSE_42.3)
+      template=autoinst-opensuse-42.3.xml
+      ;;
   openSUSE_TW)
       template=autoinst-opensuse-tw.xml
       ;;
@@ -128,6 +131,15 @@ case "${FAMILY}" in
      case "${ARCH}" in
        x86_64)
           onlinerepo="openSUSE_42.2-x86_64.repo"
+          ;;
+       *) echo "Can't determine online repository for ${FAMILY} and ${ARCH}" >&2
+          exit 3
+     esac
+     ;;
+  openSUSE_42.3)
+     case "${ARCH}" in
+       x86_64)
+          onlinerepo="openSUSE_42.3-x86_64.repo"
           ;;
        *) echo "Can't determine online repository for ${FAMILY} and ${ARCH}" >&2
           exit 3

@@ -35,7 +35,7 @@ temp=$WORKSPACE_ROOT/iso2qcow2
 
 # Download ISO image (only if it has changed since last time)
 echo "Retrieving $ISO_URL..."
-LANG=C wget -N $ISO_URL -P $cache -o $temp/wget-log.txt
+LANG=C wget -N $ISO_URL -P $cache -o $temp/wget-log.txt --show-progress
 if [ $? -ne 0 ]; then
   echo "Failure while downloading ISO image" >&2
   exit 2

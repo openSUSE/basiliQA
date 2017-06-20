@@ -368,7 +368,7 @@ Overrides the "uninstall" directives for one given node in the nodes file.
 
   $REPO_<nodename>
   example name: $REPO_CLIENT
-  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.1/home:jdoe.repo"
+  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.3/home:jdoe.repo"
 
 The URL of one or more repositories.
 Overrides the "repo" directives for one given node in the nodes file.
@@ -376,7 +376,7 @@ Overrides the "repo" directives for one given node in the nodes file.
 
   $EXTRA_REPO_<nodename>
   example name: $EXTRA_REPO_CLIENT
-  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.2/home:jdoe.repo"
+  example value: "http://download.opensuse.org/repositories/home:/jdoe/openSUSE_Leap_42.3/home:jdoe.repo"
 
 The URL of one or more repositories.
 This value does not fully override the "repo" directives from the nodes file.

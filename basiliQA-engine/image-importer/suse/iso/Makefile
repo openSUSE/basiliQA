@@ -3,7 +3,7 @@ DEST=$(DESTDIR)/usr/lib/basiliqa/image-importer/suse/iso
 all:
 
 install: autoinst-opensuse-13.2.xml \
-         autoinst-opensuse-42.1.xml autoinst-opensuse-42.2.xml \
+         autoinst-opensuse-42.1.xml autoinst-opensuse-42.2.xml autoinst-opensuse-42.3.xml \
          autoinst-opensuse-tw.xml \
          autoinst.xslt basebox.xml basebox.xslt \
          keypresses-aarch64.exp keypresses-i586.exp keypresses-x86_64.exp \
