@@ -261,7 +261,7 @@ The location to pick the .qcow2 hard disk image from.
 
   $IMAGE_NAME_<node>
   example name  $IMAGE_NAME_SUT
-  example value "SLE_12_SP1-x86_64-fips"
+  example value "openSUSE_42.2-x86_64-fips"
 
 The image name of a test node, of the form '<system>-<arch>-<variant>'.
 It matches the name of a file (with .qcow2 extension)

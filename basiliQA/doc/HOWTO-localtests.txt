@@ -176,10 +176,10 @@ You may want to make the edit-rebuild-run cycle faster.
 To do that, you can build locally with "osc build" command,
 then run the locally built test suite.
 
-  $ osc build SLE_12_SP1 --no-verif
+  $ osc build openSUSE_Leap_42.2 --no-verif
 
   $ basiliqa-vms.sh -l \
-                    -i sut=SLE_12-x86_64-default \
+                    -i sut=openSUSE_42.2-x86_64-default \
                     tests-helloworld
 
 For details about the osc command, please refer to OBS
@@ -324,7 +324,7 @@ While it's better to use images with updates already applied,
 here is how you could upgrade all packages before the tests
 start:
 
-  $ basiliqa-vms.sh --image sut=SLE_12_SP1-x86_64-default \
+  $ basiliqa-vms.sh --image sut=openSUSE_42.2-x86_64-default \
                     --extra-repo sut='${CHANNEL_UPDATES_SUT}' \
                     --refresh sut=yes \
                     tests-helloworld

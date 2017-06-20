@@ -170,7 +170,7 @@ DETAILED ANSWERS
       for the system that is installed on your workstation.
 
       If you use a jail, the control package needs to be compiled
-      for SLE_12_SP1.
+      for openSUSE Leap 42.2.
 
 
 9. Q: I am building packages locally on my workstation.

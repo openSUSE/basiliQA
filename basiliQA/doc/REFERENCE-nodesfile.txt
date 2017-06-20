@@ -87,7 +87,7 @@ Name of the project. It is identical to test package RPM spec file name.
 
   $SYSTEM_<nodename>
   example name $SYSTEM_SUT
-  example value "SLE_12_SP1_GMC3_Build4797"
+  example value "SLE_12_SP2_GMC3_Build4797"
 
 Distribution chosen at run time.
 <nodename> is capitalized name given in "node" directive.
@@ -95,11 +95,11 @@ Distribution chosen at run time.
 
   $FAMILY_<nodename>
   example name $FAMILY_SUT
-  example value "SLE_12_SP1"
+  example value "SLE_12_SP2"
 
 Generic family of distribution chosen at run time.
-For example, the family of "SLE_12_SP1_GMC3_Build4797" is
-"SLE_12_SP1". The mapping between systems and families
+For example, the family of "SLE_12_SP2_GMC3_Build4797" is
+"SLE_12_SP2". The mapping between systems and families
 is defined in the "images.list" file on images server.
 <nodename> is capitalized name given in "node" directive.
 
