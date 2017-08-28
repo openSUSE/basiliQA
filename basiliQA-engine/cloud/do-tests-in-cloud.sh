@@ -65,7 +65,7 @@ function delete-previous-instance
 {
   local timeout
   local machine_list machine_id machine_status
-  local floating_list floating_ip
+  local addresses_list addresses floating_ip
   local i
 
   timeout=60
@@ -84,17 +84,19 @@ function delete-previous-instance
       echo "Instance ${MACHINE_NAME} with ID ${machine_id} is already being deleted"
     else
       echo "Instance ${MACHINE_NAME} with ID ${machine_id} already exists, deleting it"
-      floating_list=$(openstack server show "${machine_id}" | grep " addresses " | sed 's/^.*, //; s/ *|$//')
+      addresses_list=$(openstack server show "${machine_id}" | grep " addresses " | cut -d'|' -f3)
       if [ $? -ne 0 ]; then
         echo "Openstack error" >&2
         exit 20
       fi
-      for floating_ip in $floating_list; do
+      for addresses in $(echo "$addresses_list" | tr -d ' ' | tr ';' ' '); do
+        floating_ip=$(echo "$addresses" | sed 's/^.*,//')
         openstack server remove floating ip "${machine_id}" "${floating_ip}"
         if [ $? -ne 0 ]; then
           echo "Openstack error" >&2
           exit 20
         fi
+        echo "Floating IP ${floating_ip} has been removed"
       done
       openstack server delete "$machine_id"
       if [ $? -ne 0 ]; then

@@ -7,3 +7,4 @@ priority=1
 baseurl=dir:///var/lib/basiliqa/RPMs
 path=/
 type=plaindir
+gpgcheck=0
