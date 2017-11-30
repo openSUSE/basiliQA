@@ -356,8 +356,10 @@ function download-image
   local image_name="$1"
   local image_url="$2"
   local architecture="$3"
-  local image_arch
-  local image_tmp=$(mktemp /tmp/basiliqa-image-XXXXX)
+  local image_arch image_tmp
+
+  mkdir -p /var/tmp/basiliqa
+  image_tmp=$(mktemp /var/tmp/basiliqa/image-XXXXX)
 
   echo "Downloading image from ${image_url}..."
   if [ "$architecture" = "i586" ]; then
